@@ -109,16 +109,16 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
 /* TOPBAR */
-.topbar{position:sticky;top:0;z-index:9999;background:rgba(255,255,255,.78);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border-bottom:1px solid var(--border);padding:var(--s3) 0;transition:background var(--tr);display:block!important;visibility:visible!important}
+.topbar{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.78);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border-bottom:1px solid var(--border);padding:var(--s3) 0;transition:background var(--tr)}
 [data-theme="dark"] .topbar{background:rgba(26,29,36,.78)}
 .topbar-in{display:flex;align-items:center;justify-content:space-between;gap:var(--s4)}
-.brand{display:flex;align-items:center;gap:var(--s2);font-family:var(--font-d);font-weight:700;font-size:1.15rem;cursor:pointer;color:var(--text);letter-spacing:-.02em;z-index:1}
+.brand{display:flex;align-items:center;gap:var(--s2);font-family:var(--font-d);font-weight:700;font-size:1.15rem;cursor:pointer;color:var(--text);letter-spacing:-.02em}
 .brand img{height:26px;width:auto}
 [data-theme="dark"] .brand img{filter:invert(.92) brightness(1.4)}
-.top-nav{display:flex;align-items:center;gap:var(--s1);z-index:1}
-.top-nav a{font-size:var(--sm);color:var(--muted);padding:var(--s2) var(--s4);border-radius:var(--r-full);transition:color var(--tr),background var(--tr);font-weight:500;z-index:1}
+.top-nav{display:flex;align-items:center;gap:var(--s1)}
+.top-nav a{font-size:var(--sm);color:var(--muted);padding:var(--s2) var(--s4);border-radius:var(--r-full);transition:color var(--tr),background var(--tr);font-weight:500}
 .top-nav a:hover{color:var(--text);background:var(--ink-05)}
-.top-acts{display:flex;align-items:center;gap:var(--s2);z-index:1}
+.top-acts{display:flex;align-items:center;gap:var(--s2)}
 
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);padding:var(--s3) var(--s5);border-radius:var(--r-full);font-size:var(--sm);font-weight:500;white-space:nowrap;border:1px solid transparent;cursor:pointer;transition:all var(--tr);font-family:var(--font-b);position:relative;overflow:hidden}
@@ -1021,54 +1021,57 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
   <div class="editor-shell">
     <div class="ed-main">
       <div class="pg-title">Редактор логотипа</div>
-      <!-- ГЛАВНЫЙ ХОЛСТ - динамическое изображение -->
       <div class="canvas-area">
-        <img id="editor-canvas" src="" alt="Логотип" style="width:100%;height:100%;object-fit:contain">
+        <svg viewBox="0 0 200 200" fill="none" width="220" height="220" id="ed-canvas">
+          <circle cx="100" cy="100" r="70" stroke="#C68DFF" stroke-width="5"/>
+          <text x="100" y="115" text-anchor="middle" font-size="56" font-family="Unbounded,serif" fill="#C68DFF" font-weight="700">Ax</text>
+        </svg>
       </div>
       <div class="ed-toolbar">
         <div class="ed-tool-group">
           <div class="ed-tool-label">Цвет элементов</div>
-          <div class="swatches" id="editor-color-swatches">
-            <!-- Будут заполнены динамически -->
+          <div class="swatches">
+            <div class="sw on" style="background:#C68DFF" onclick="selSw(this);edColor('#C68DFF')"></div>
+            <div class="sw" style="background:#CBE857" onclick="selSw(this);edColor('#CBE857')"></div>
+            <div class="sw" style="background:#323843" onclick="selSw(this);edColor('#323843')"></div>
+            <div class="sw" style="background:#5BA84A" onclick="selSw(this);edColor('#5BA84A')"></div>
+            <div class="sw" style="background:#E25A6F" onclick="selSw(this);edColor('#E25A6F')"></div>
           </div>
         </div>
         <div class="ed-tool-group">
           <div class="ed-tool-label">Шрифт</div>
-          <div class="tag-row" id="editor-fonts">
-            <span class="chip" data-font="Unbounded" onclick="edSetFont(this)">Unbounded</span>
-            <span class="chip" data-font="Inter" onclick="edSetFont(this)">Inter</span>
-            <span class="chip" data-font="Mono" onclick="edSetFont(this)">Mono</span>
+          <div class="tag-row">
+            <span class="chip on" onclick="togSingle(this)">Unbounded</span>
+            <span class="chip" onclick="togSingle(this)">Inter</span>
+            <span class="chip" onclick="togSingle(this)">Mono</span>
           </div>
         </div>
         <div class="ed-tool-group">
           <div class="ed-tool-label">Фон превью</div>
-          <div class="tag-row" id="editor-backgrounds">
-            <span class="chip" data-bg="light" onclick="edSetBackground(this)">Светлый</span>
-            <span class="chip" data-bg="dark" onclick="edSetBackground(this)">Тёмный</span>
-            <span class="chip" data-bg="transparent" onclick="edSetBackground(this)">Прозрачный</span>
+          <div class="tag-row">
+            <span class="chip on" onclick="togSingle(this)">Светлый</span>
+            <span class="chip" onclick="togSingle(this)">Тёмный</span>
+            <span class="chip" onclick="togSingle(this)">Прозрачный</span>
           </div>
         </div>
       </div>
       <div class="btn-row">
-        <button class="btn btn-secondary" onclick="backToResults()">← К вариантам</button>
-        <button class="btn btn-violet" onclick="goToExport()">Перейти к экспорту →</button>
+        <button class="btn btn-secondary" onclick="show('results')">← К вариантам</button>
+        <button class="btn btn-violet" onclick="show('export')">Перейти к экспорту →</button>
       </div>
     </div>
     <aside class="ed-panel">
       <div class="pan-title">Предпросмотр</div>
-      <!-- БЛОК ПРЕДПРОСМОТРА - два превью сгенерированного логотипа -->
-      <div class="mini-prev" id="preview-light">
-        <img src="" alt="Логотип на светлом фоне" style="width:100%;height:100%;object-fit:contain">
-      </div>
-      <div class="mini-prev dark-bg" id="preview-dark">
-        <img src="" alt="Логотип на тёмном фоне" style="width:100%;height:100%;object-fit:contain">
-      </div>
+      <div class="mini-prev"><svg viewBox="0 0 100 100" fill="none" width="100%"><circle cx="50" cy="50" r="34" stroke="#C68DFF" stroke-width="3"/><text x="50" y="58" text-anchor="middle" font-size="26" font-family="Unbounded,serif" fill="#C68DFF" font-weight="700">Ax</text></svg></div>
+      <div class="mini-prev dark-bg"><svg viewBox="0 0 100 100" fill="none" width="100%"><circle cx="50" cy="50" r="34" stroke="#CBE857" stroke-width="3"/><text x="50" y="58" text-anchor="middle" font-size="26" font-family="Unbounded,serif" fill="#CBE857" font-weight="700">Ax</text></svg></div>
       <div class="pan-div"></div>
-      <!-- БЛОК ПАРАМЕТРЫ - реальные данные из БД -->
       <div>
         <div class="pan-title" style="margin-bottom:var(--s3)">Параметры</div>
-        <div id="editor-params" style="display:flex;flex-direction:column;gap:var(--s2);font-size:var(--sm)">
-          <!-- Будут заполнены динамически -->
+        <div style="display:flex;flex-direction:column;gap:var(--s2);font-size:var(--sm)">
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Бренд</span><span>Axion Studio</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Ниша</span><span>Дизайн</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Стиль</span><span>Минималистичный</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Цвет</span><span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:50%;background:#C68DFF;display:inline-block"></span>Фиолетовый</span></div>
         </div>
       </div>
       <div class="pan-div"></div>
@@ -1557,38 +1560,6 @@ let currentSubscription = null;
   });
 })();
 
-/* WIZARD */
-let currentTab = 'all';
-let searchQuery = '';
-let currentUser = null;
-let currentSubscription = null;
-
-// LOGO EDITOR STATE
-let editorState = {
-  logoId: null,
-  projectId: null,
-  brandName: null,
-  niche: null,
-  style: null,
-  colors: [],
-  imageUrl: null,
-  font: 'Unbounded',
-  background: 'light',
-  variant: 1,
-  isSaving: false,
-  needsSave: false,
-};
-
-// Color swatches for editor
-const COLOR_SWATCHES = [
-  { hex: '#C68DFF', name: 'Фиолетовый' },
-  { hex: '#CBE857', name: 'Лайм' },
-  { hex: '#323843', name: 'Тёмный' },
-  { hex: '#FFFFFF', name: 'Белый' },
-  { hex: '#5BA84A', name: 'Зелёный' },
-  { hex: '#E25A6F', name: 'Розовый' },
-];
-
 /* NAVIGATION */
 async function show(v){
   // Проверяем аутентификацию для защищенных страниц
@@ -1767,63 +1738,30 @@ async function pollGenerationStatus() {
   let attempts = 0;
   const maxAttempts = 30; // 2 минуты максимум
 
-  console.log('Starting polling for prediction:', currentPredictionId);
-
   genTimer=setInterval(async()=>{
     try {
       attempts++;
       progress = Math.min(progress + Math.random() * 5 + 2, 95);
 
-      console.log(`Poll attempt ${attempts}/${maxAttempts}, progress: ${progress.toFixed(1)}%`);
-
       const result = await api.pollGenerationStatus(currentPredictionId);
 
-      console.log('Poll result:', result);
-
-      if (result.status === 'completed' || result.status === 'succeeded') {
-        console.log('Generation completed!');
+      if (result.status === 'completed') {
         progress = 100;
         clearInterval(genTimer);
 
-        fill.style.width='100%';
-        pct.textContent='100%';
-        msg.textContent='Готово!';
-
         // Получаем проект с результатами
-        console.log('Fetching project:', currentProjectId);
         const project = await api.getProject(currentProjectId);
-        console.log('Project data:', project);
-
-        // Проверяем, есть ли логотипы
-        if (!project.logos || project.logos.length === 0) {
-          console.error('No logos in project response');
-          toast('Ошибка: логотипы не сгенерированы');
-          show('gen');
-          return;
-        }
-
-        console.log('Logos found:', project.logos.length);
 
         document.getElementById('gen-state').style.display='none';
         document.getElementById('res-state').style.display='';
 
         // Рендерим результаты
         renderResults(project.logos);
-
-        // Автоматически открываем редактор через 1 секунду
-        setTimeout(() => {
-          console.log('Opening editor...');
-          show('editor');
-        }, 1000);
-
       } else if (result.status === 'failed') {
-        console.error('Generation failed:', result.error);
         clearInterval(genTimer);
         toast('Ошибка генерации: ' + (result.error || 'Неизвестная ошибка'));
         show('gen');
         return;
-      } else if (result.status === 'processing' || result.status === 'starting') {
-        console.log('Generation still processing...');
       }
 
       fill.style.width=progress+'%';
@@ -1836,7 +1774,6 @@ async function pollGenerationStatus() {
       else msg.textContent = 'Готово!';
 
       if (attempts >= maxAttempts) {
-        console.error('Max attempts reached');
         clearInterval(genTimer);
         toast('Время ожидания истекло');
         show('gen');
@@ -1845,7 +1782,7 @@ async function pollGenerationStatus() {
     } catch (error) {
       console.error('Poll error:', error);
       clearInterval(genTimer);
-      toast('Ошибка при получении статуса: ' + error.message);
+      toast('Ошибка при получении статуса');
       show('gen');
     }
   },2000);
@@ -1945,373 +1882,6 @@ function downloadFile(){
   if(fmt==='SVG'){toast('SVG доступен только на тарифе Про');return}
   toast(fmt+'-файл скачивается…');
   setTimeout(()=>toast('Файл сохранён в Загрузки'),1800);
-}
-
-/* SAVE DRAFT */
-async function saveDraft(){
-  if (!isAuthenticated()) {
-    toast('Сначала войдите в аккаунт');
-    show('auth');
-    return;
-  }
-
-  if (editorState.isSaving) {
-    toast('Сохранение...');
-    return;
-  }
-
-  if (!editorState.logoId) {
-    console.error('No logo ID in editor state');
-    toast('Ошибка: логотип не найден');
-    return;
-  }
-
-  try {
-    editorState.isSaving = true;
-
-    console.log('Saving logo as draft:', editorState.logoId);
-
-    // Сохраняем текущие настройки
-    const saveData = {
-      font: editorState.font,
-      background: editorState.background,
-    };
-
-    const result = await api.saveLogoDraft(editorState.logoId, saveData);
-
-    console.log('Draft saved:', result);
-
-    // Сбрасываем флаг необходимости сохранения
-    editorState.needsSave = false;
-
-    // Обновляем счётчики
-    await updateCounters();
-
-    toast('Черновик сохранён');
-  } catch (error) {
-    console.error('Save draft error:', error);
-    toast('Ошибка при сохранении черновика: ' + error.message);
-  } finally {
-    editorState.isSaving = false;
-  }
-}
-
-// ==================== LOGO EDITOR FUNCTIONS ====================
-
-/**
- * Загрузка данных логотипа в редактор
- */
-async function loadEditorData(logoId) {
-  try {
-    console.log('Loading editor data for logo:', logoId);
-
-    // Получаем данные логотипа с бэкенда
-    const logoData = await api.getLogo(logoId);
-
-    console.log('Logo data received:', logoData);
-
-    // Обновляем стейт редактора
-    editorState = {
-      logoId: logoData.id,
-      projectId: null, // Может быть добавлено если нужно
-      brandName: logoData.brandName || '',
-      niche: logoData.niche || '',
-      style: logoData.style || '',
-      colors: logoData.colors || [],
-      imageUrl: logoData.imageUrl || '',
-      font: logoData.font || 'Unbounded',
-      background: logoData.background || 'light',
-      variant: logoData.variant || 1,
-      isSaving: false,
-      needsSave: false,
-    };
-
-    console.log('Editor state updated:', editorState);
-
-    // Обновляем UI редактора
-    updateEditorUI();
-
-    console.log('Editor UI updated successfully');
-  } catch (error) {
-    console.error('Load editor data error:', error);
-    toast('Ошибка при загрузке логотипа: ' + error.message);
-  }
-}
-
-/**
- * Обновление UI редактора на основе стейта
- */
-function updateEditorUI() {
-  console.log('Updating editor UI with state:', editorState);
-
-  // 1. Обновляем главный холст
-  const canvas = document.getElementById('editor-canvas');
-  if (canvas) {
-    canvas.src = editorState.imageUrl;
-  }
-
-  // 2. Обновляем предпросмотры
-  const previewLight = document.getElementById('preview-light').querySelector('img');
-  const previewDark = document.getElementById('preview-dark').querySelector('img');
-
-  if (previewLight) {
-    previewLight.src = editorState.imageUrl;
-  }
-  if (previewDark) {
-    previewDark.src = editorState.imageUrl;
-  }
-
-  // 3. Обновляем swatches цветов
-  updateColorSwatches();
-
-  // 4. Обновляем выбор шрифта
-  updateFontSelection();
-
-  // 5. Обновляем выбор фона
-  updateBackgroundSelection();
-
-  // 6. Обновляем блок параметров
-  updateParametersPanel();
-
-  console.log('Editor UI update complete');
-}
-
-/**
- * Обновление swatches цветов
- */
-function updateColorSwatches() {
-  const container = document.getElementById('editor-color-swatches');
-  if (!container) return;
-
-  container.innerHTML = COLOR_SWATCHES.map(color => {
-    const isSelected = editorState.colors.includes(color.hex);
-    return `
-      <div class="sw ${isSelected ? 'on' : ''}" 
-           style="background:${color.hex}" 
-           onclick="edSelectColor('${color.hex}')"
-           title="${color.name}">
-      </div>
-    `;
-  }).join('');
-}
-
-/**
- * Обновление выбора шрифта
- */
-function updateFontSelection() {
-  const container = document.getElementById('editor-fonts');
-  if (!container) return;
-
-  container.querySelectorAll('.chip').forEach(chip => {
-    const font = chip.getAttribute('data-font');
-    if (font === editorState.font) {
-      chip.classList.add('on');
-    } else {
-      chip.classList.remove('on');
-    }
-  });
-}
-
-/**
- * Обновление выбора фона
- */
-function updateBackgroundSelection() {
-  const container = document.getElementById('editor-backgrounds');
-  if (!container) return;
-
-  container.querySelectorAll('.chip').forEach(chip => {
-    const bg = chip.getAttribute('data-bg');
-    if (bg === editorState.background) {
-      chip.classList.add('on');
-    } else {
-      chip.classList.remove('on');
-    }
-  });
-
-  // Обновляем фона предпросмотров
-  const previewLight = document.getElementById('preview-light');
-  const previewDark = document.getElementById('preview-dark');
-
-  if (editorState.background === 'dark') {
-    previewLight.style.background = '#1A1D24';
-    previewDark.style.background = '#2A2F39';
-  } else if (editorState.background === 'transparent') {
-    previewLight.style.background = 'repeating-conic-gradient(#e0e0e0 0% 25%, #fff 0% 50%) 50% / 20px 20px';
-    previewDark.style.background = 'repeating-conic-gradient(#2a2f39 0% 25%, #1a1d24 0% 50%) 50% / 20px 20px';
-  } else {
-    previewLight.style.background = '#F4F4F6';
-    previewDark.style.background = '#1A1D24';
-  }
-}
-
-/**
- * Обновление блока параметров
- */
-function updateParametersPanel() {
-  const container = document.getElementById('editor-params');
-  if (!container) return;
-
-  const colorHex = editorState.colors[0] || '#C68DFF';
-  const colorName = COLOR_SWATCHES.find(c => c.hex === colorHex)?.name || 'Неизвестный';
-
-  container.innerHTML = `
-    <div style="display:flex;justify-content:space-between">
-      <span style="color:var(--muted)">Бренд</span>
-      <span>${editorState.brandName || '-'}</span>
-    </div>
-    <div style="display:flex;justify-content:space-between">
-      <span style="color:var(--muted)">Ниша</span>
-      <span>${editorState.niche || '-'}</span>
-    </div>
-    <div style="display:flex;justify-content:space-between">
-      <span style="color:var(--muted)">Стиль</span>
-      <span>${editorState.style || '-'}</span>
-    </div>
-    <div style="display:flex;justify-content:space-between">
-      <span style="color:var(--muted)">Цвет</span>
-      <span style="display:flex;align-items:center;gap:6px">
-        <span style="width:12px;height:12px;border-radius:50%;background:${colorHex};display:inline-block"></span>
-        ${colorName}
-      </span>
-    </div>
-    <div style="display:flex;justify-content:space-between">
-      <span style="color:var(--muted)">Шрифт</span>
-      <span>${editorState.font}</span>
-    </div>
-  `;
-}
-
-// ==================== EDITOR EVENT HANDLERS ====================
-
-/**
- * Выбор цвета в редакторе
- */
-async function edSelectColor(colorHex) {
-  console.log('Selecting color:', colorHex);
-
-  // Обновляем стейт (добавляем если нет, иначе оставляем)
-  if (!editorState.colors.includes(colorHex)) {
-    editorState.colors = [colorHex];
-  }
-
-  // Обновляем UI немедленно
-  updateColorSwatches();
-  updateParametersPanel();
-
-  // Сохраняем на сервере с debounce
-  if (editorState.logoId) {
-    debouncedSaveSettings();
-  }
-}
-
-/**
- * Установка шрифта в редакторе
- */
-async function edSetFont(chipElement) {
-  const font = chipElement.getAttribute('data-font');
-  console.log('Setting font:', font);
-
-  // Обновляем стейт
-  editorState.font = font;
-
-  // Обновляем UI немедленно
-  updateFontSelection();
-  updateParametersPanel();
-
-  // Сохраняем на сервере с debounce
-  if (editorState.logoId) {
-    debouncedSaveSettings();
-  }
-}
-
-/**
- * Установка фона в редакторе
- */
-async function edSetBackground(chipElement) {
-  const background = chipElement.getAttribute('data-bg');
-  console.log('Setting background:', background);
-
-  // Обновляем стейт
-  editorState.background = background;
-
-  // Обновляем UI немедленно
-  updateBackgroundSelection();
-
-  // Сохраняем на сервере с debounce
-  if (editorState.logoId) {
-    debouncedSaveSettings();
-  }
-}
-
-/**
- * Debounced save для настроек редактора (чтобы не спамить сервер)
- */
-let saveTimeout;
-function debouncedSaveSettings() {
-  clearTimeout(saveTimeout);
-
-  saveTimeout = setTimeout(async () => {
-    if (editorState.logoId && editorState.needsSave) {
-      try {
-        const updateData = {
-          font: editorState.font,
-          background: editorState.background,
-        };
-
-        await api.updateLogo(editorState.logoId, updateData);
-        console.log('Editor settings saved');
-      } catch (error) {
-        console.error('Save editor settings error:', error);
-      }
-    }
-  }, 500); // 500ms debounce
-}
-
-/**
- * Возврат к вариантам
- */
-function backToResults() {
-  // Сохраняем перед выходом
-  if (editorState.logoId) {
-    debouncedSaveSettings();
-  }
-  
-  show('results');
-}
-
-/**
- * Переход к экспорту
- */
-async function goToExport() {
-  // Сохраняем перед переходом
-  if (editorState.logoId) {
-    try {
-      const updateData = {
-        font: editorState.font,
-        background: editorState.background,
-      };
-
-      await api.updateLogo(editorState.logoId, updateData);
-      console.log('Editor settings saved before export');
-    } catch (error) {
-      console.error('Save before export error:', error);
-    }
-  }
-
-  show('export');
-}
-
-/**
- * Открывает редактор для выбранного логотипа
- */
-async function openEditorForLogo(logoId) {
-  console.log('Opening editor for logo:', logoId);
-
-  // Загружаем данные в редактор
-  await loadEditorData(logoId);
-
-  // Показываем редактор
-  show('editor');
 }
 
 /* SAVE DRAFT */
@@ -2872,8 +2442,8 @@ function checkAllGridsForEmptyState() {
        
        // Перебрасываем ошибку для обработки в confirmDelete
        throw error;
+     }
   }
-}
 
 /* TOAST */
 let tTimer;
@@ -3068,49 +2638,14 @@ function handleLogout() {
   });
 }
 
-// Export functions for global use - MUST be after function definitions
-window.handleLogin = handleLogin;
-window.handleRegister = handleRegister;
-window.switchTab = switchTab;
-window.handleDelete = handleDelete;
-window.show = show;
-window.scrollToSec = scrollToSec;
-window.handleLogout = handleLogout;
-window.tog = tog;
-window.gstep = gstep;
-window.selSw = selSw;
-window.startGen = startGen;
-window.selRes = selRes;
-window.edSelectColor = edSelectColor;
-window.edSetFont = edSetFont;
-window.edSetBackground = edSetBackground;
-window.selectLogo = selectLogo;
-window.openEditor = openEditor;
-window.saveDraft = saveDraft;
-window.downloadExport = downloadExport;
-window.confirmDelete = confirmDelete;
-window.closeDeleteModal = closeDeleteModal;
-
 // Обновляем кнопки в форме авторизации
 document.getElementById('em')?.parentElement?.parentElement?.querySelector('.btn-violet')?.setAttribute('onclick', 'handleLogin()');
 document.getElementById('em')?.parentElement?.parentElement?.querySelector('.btn-secondary')?.setAttribute('onclick', 'handleRegister()');
 
-// Initialize IMMEDIATELY after all functions are exported
-// Debug: check if all required functions are available
-console.log('=== LogoAI Debug Info ===');
-console.log('show function:', typeof window.show);
-console.log('scrollToSec function:', typeof window.scrollToSec);
-console.log('isAuthenticated function:', typeof window.isAuthenticated);
-console.log('handleLogin function:', typeof window.handleLogin);
-console.log('handleRegister function:', typeof window.handleRegister);
-console.log('tog function:', typeof window.tog);
-console.log('gstep function:', typeof window.gstep);
-console.log('selSw function:', typeof window.selSw);
-console.log('startGen function:', typeof window.startGen);
-console.log('selRes function:', typeof window.selRes);
-
-// Initialize app
+// Initialize
 initApp();
+
+
 
 </script>
 </body>
