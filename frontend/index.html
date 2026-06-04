@@ -109,16 +109,16 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
 /* TOPBAR */
-.topbar{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.78);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border-bottom:1px solid var(--border);padding:var(--s3) 0;transition:background var(--tr)}
+.topbar{position:sticky;top:0;z-index:9999;background:rgba(255,255,255,.78);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border-bottom:1px solid var(--border);padding:var(--s3) 0;transition:background var(--tr);display:block!important;visibility:visible!important}
 [data-theme="dark"] .topbar{background:rgba(26,29,36,.78)}
 .topbar-in{display:flex;align-items:center;justify-content:space-between;gap:var(--s4)}
-.brand{display:flex;align-items:center;gap:var(--s2);font-family:var(--font-d);font-weight:700;font-size:1.15rem;cursor:pointer;color:var(--text);letter-spacing:-.02em}
+.brand{display:flex;align-items:center;gap:var(--s2);font-family:var(--font-d);font-weight:700;font-size:1.15rem;cursor:pointer;color:var(--text);letter-spacing:-.02em;z-index:1}
 .brand img{height:26px;width:auto}
 [data-theme="dark"] .brand img{filter:invert(.92) brightness(1.4)}
-.top-nav{display:flex;align-items:center;gap:var(--s1)}
-.top-nav a{font-size:var(--sm);color:var(--muted);padding:var(--s2) var(--s4);border-radius:var(--r-full);transition:color var(--tr),background var(--tr);font-weight:500}
+.top-nav{display:flex;align-items:center;gap:var(--s1);z-index:1}
+.top-nav a{font-size:var(--sm);color:var(--muted);padding:var(--s2) var(--s4);border-radius:var(--r-full);transition:color var(--tr),background var(--tr);font-weight:500;z-index:1}
 .top-nav a:hover{color:var(--text);background:var(--ink-05)}
-.top-acts{display:flex;align-items:center;gap:var(--s2)}
+.top-acts{display:flex;align-items:center;gap:var(--s2);z-index:1}
 
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);padding:var(--s3) var(--s5);border-radius:var(--r-full);font-size:var(--sm);font-weight:500;white-space:nowrap;border:1px solid transparent;cursor:pointer;transition:all var(--tr);font-family:var(--font-b);position:relative;overflow:hidden}
@@ -1557,6 +1557,38 @@ let currentSubscription = null;
   });
 })();
 
+/* WIZARD */
+let currentTab = 'all';
+let searchQuery = '';
+let currentUser = null;
+let currentSubscription = null;
+
+// LOGO EDITOR STATE
+let editorState = {
+  logoId: null,
+  projectId: null,
+  brandName: null,
+  niche: null,
+  style: null,
+  colors: [],
+  imageUrl: null,
+  font: 'Unbounded',
+  background: 'light',
+  variant: 1,
+  isSaving: false,
+  needsSave: false,
+};
+
+// Color swatches for editor
+const COLOR_SWATCHES = [
+  { hex: '#C68DFF', name: 'Фиолетовый' },
+  { hex: '#CBE857', name: 'Лайм' },
+  { hex: '#323843', name: 'Тёмный' },
+  { hex: '#FFFFFF', name: 'Белый' },
+  { hex: '#5BA84A', name: 'Зелёный' },
+  { hex: '#E25A6F', name: 'Розовый' },
+];
+
 /* NAVIGATION */
 async function show(v){
   // Проверяем аутентификацию для защищенных страниц
@@ -1913,6 +1945,373 @@ function downloadFile(){
   if(fmt==='SVG'){toast('SVG доступен только на тарифе Про');return}
   toast(fmt+'-файл скачивается…');
   setTimeout(()=>toast('Файл сохранён в Загрузки'),1800);
+}
+
+/* SAVE DRAFT */
+async function saveDraft(){
+  if (!isAuthenticated()) {
+    toast('Сначала войдите в аккаунт');
+    show('auth');
+    return;
+  }
+
+  if (editorState.isSaving) {
+    toast('Сохранение...');
+    return;
+  }
+
+  if (!editorState.logoId) {
+    console.error('No logo ID in editor state');
+    toast('Ошибка: логотип не найден');
+    return;
+  }
+
+  try {
+    editorState.isSaving = true;
+
+    console.log('Saving logo as draft:', editorState.logoId);
+
+    // Сохраняем текущие настройки
+    const saveData = {
+      font: editorState.font,
+      background: editorState.background,
+    };
+
+    const result = await api.saveLogoDraft(editorState.logoId, saveData);
+
+    console.log('Draft saved:', result);
+
+    // Сбрасываем флаг необходимости сохранения
+    editorState.needsSave = false;
+
+    // Обновляем счётчики
+    await updateCounters();
+
+    toast('Черновик сохранён');
+  } catch (error) {
+    console.error('Save draft error:', error);
+    toast('Ошибка при сохранении черновика: ' + error.message);
+  } finally {
+    editorState.isSaving = false;
+  }
+}
+
+// ==================== LOGO EDITOR FUNCTIONS ====================
+
+/**
+ * Загрузка данных логотипа в редактор
+ */
+async function loadEditorData(logoId) {
+  try {
+    console.log('Loading editor data for logo:', logoId);
+
+    // Получаем данные логотипа с бэкенда
+    const logoData = await api.getLogo(logoId);
+
+    console.log('Logo data received:', logoData);
+
+    // Обновляем стейт редактора
+    editorState = {
+      logoId: logoData.id,
+      projectId: null, // Может быть добавлено если нужно
+      brandName: logoData.brandName || '',
+      niche: logoData.niche || '',
+      style: logoData.style || '',
+      colors: logoData.colors || [],
+      imageUrl: logoData.imageUrl || '',
+      font: logoData.font || 'Unbounded',
+      background: logoData.background || 'light',
+      variant: logoData.variant || 1,
+      isSaving: false,
+      needsSave: false,
+    };
+
+    console.log('Editor state updated:', editorState);
+
+    // Обновляем UI редактора
+    updateEditorUI();
+
+    console.log('Editor UI updated successfully');
+  } catch (error) {
+    console.error('Load editor data error:', error);
+    toast('Ошибка при загрузке логотипа: ' + error.message);
+  }
+}
+
+/**
+ * Обновление UI редактора на основе стейта
+ */
+function updateEditorUI() {
+  console.log('Updating editor UI with state:', editorState);
+
+  // 1. Обновляем главный холст
+  const canvas = document.getElementById('editor-canvas');
+  if (canvas) {
+    canvas.src = editorState.imageUrl;
+  }
+
+  // 2. Обновляем предпросмотры
+  const previewLight = document.getElementById('preview-light').querySelector('img');
+  const previewDark = document.getElementById('preview-dark').querySelector('img');
+
+  if (previewLight) {
+    previewLight.src = editorState.imageUrl;
+  }
+  if (previewDark) {
+    previewDark.src = editorState.imageUrl;
+  }
+
+  // 3. Обновляем swatches цветов
+  updateColorSwatches();
+
+  // 4. Обновляем выбор шрифта
+  updateFontSelection();
+
+  // 5. Обновляем выбор фона
+  updateBackgroundSelection();
+
+  // 6. Обновляем блок параметров
+  updateParametersPanel();
+
+  console.log('Editor UI update complete');
+}
+
+/**
+ * Обновление swatches цветов
+ */
+function updateColorSwatches() {
+  const container = document.getElementById('editor-color-swatches');
+  if (!container) return;
+
+  container.innerHTML = COLOR_SWATCHES.map(color => {
+    const isSelected = editorState.colors.includes(color.hex);
+    return `
+      <div class="sw ${isSelected ? 'on' : ''}" 
+           style="background:${color.hex}" 
+           onclick="edSelectColor('${color.hex}')"
+           title="${color.name}">
+      </div>
+    `;
+  }).join('');
+}
+
+/**
+ * Обновление выбора шрифта
+ */
+function updateFontSelection() {
+  const container = document.getElementById('editor-fonts');
+  if (!container) return;
+
+  container.querySelectorAll('.chip').forEach(chip => {
+    const font = chip.getAttribute('data-font');
+    if (font === editorState.font) {
+      chip.classList.add('on');
+    } else {
+      chip.classList.remove('on');
+    }
+  });
+}
+
+/**
+ * Обновление выбора фона
+ */
+function updateBackgroundSelection() {
+  const container = document.getElementById('editor-backgrounds');
+  if (!container) return;
+
+  container.querySelectorAll('.chip').forEach(chip => {
+    const bg = chip.getAttribute('data-bg');
+    if (bg === editorState.background) {
+      chip.classList.add('on');
+    } else {
+      chip.classList.remove('on');
+    }
+  });
+
+  // Обновляем фона предпросмотров
+  const previewLight = document.getElementById('preview-light');
+  const previewDark = document.getElementById('preview-dark');
+
+  if (editorState.background === 'dark') {
+    previewLight.style.background = '#1A1D24';
+    previewDark.style.background = '#2A2F39';
+  } else if (editorState.background === 'transparent') {
+    previewLight.style.background = 'repeating-conic-gradient(#e0e0e0 0% 25%, #fff 0% 50%) 50% / 20px 20px';
+    previewDark.style.background = 'repeating-conic-gradient(#2a2f39 0% 25%, #1a1d24 0% 50%) 50% / 20px 20px';
+  } else {
+    previewLight.style.background = '#F4F4F6';
+    previewDark.style.background = '#1A1D24';
+  }
+}
+
+/**
+ * Обновление блока параметров
+ */
+function updateParametersPanel() {
+  const container = document.getElementById('editor-params');
+  if (!container) return;
+
+  const colorHex = editorState.colors[0] || '#C68DFF';
+  const colorName = COLOR_SWATCHES.find(c => c.hex === colorHex)?.name || 'Неизвестный';
+
+  container.innerHTML = `
+    <div style="display:flex;justify-content:space-between">
+      <span style="color:var(--muted)">Бренд</span>
+      <span>${editorState.brandName || '-'}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between">
+      <span style="color:var(--muted)">Ниша</span>
+      <span>${editorState.niche || '-'}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between">
+      <span style="color:var(--muted)">Стиль</span>
+      <span>${editorState.style || '-'}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between">
+      <span style="color:var(--muted)">Цвет</span>
+      <span style="display:flex;align-items:center;gap:6px">
+        <span style="width:12px;height:12px;border-radius:50%;background:${colorHex};display:inline-block"></span>
+        ${colorName}
+      </span>
+    </div>
+    <div style="display:flex;justify-content:space-between">
+      <span style="color:var(--muted)">Шрифт</span>
+      <span>${editorState.font}</span>
+    </div>
+  `;
+}
+
+// ==================== EDITOR EVENT HANDLERS ====================
+
+/**
+ * Выбор цвета в редакторе
+ */
+async function edSelectColor(colorHex) {
+  console.log('Selecting color:', colorHex);
+
+  // Обновляем стейт (добавляем если нет, иначе оставляем)
+  if (!editorState.colors.includes(colorHex)) {
+    editorState.colors = [colorHex];
+  }
+
+  // Обновляем UI немедленно
+  updateColorSwatches();
+  updateParametersPanel();
+
+  // Сохраняем на сервере с debounce
+  if (editorState.logoId) {
+    debouncedSaveSettings();
+  }
+}
+
+/**
+ * Установка шрифта в редакторе
+ */
+async function edSetFont(chipElement) {
+  const font = chipElement.getAttribute('data-font');
+  console.log('Setting font:', font);
+
+  // Обновляем стейт
+  editorState.font = font;
+
+  // Обновляем UI немедленно
+  updateFontSelection();
+  updateParametersPanel();
+
+  // Сохраняем на сервере с debounce
+  if (editorState.logoId) {
+    debouncedSaveSettings();
+  }
+}
+
+/**
+ * Установка фона в редакторе
+ */
+async function edSetBackground(chipElement) {
+  const background = chipElement.getAttribute('data-bg');
+  console.log('Setting background:', background);
+
+  // Обновляем стейт
+  editorState.background = background;
+
+  // Обновляем UI немедленно
+  updateBackgroundSelection();
+
+  // Сохраняем на сервере с debounce
+  if (editorState.logoId) {
+    debouncedSaveSettings();
+  }
+}
+
+/**
+ * Debounced save для настроек редактора (чтобы не спамить сервер)
+ */
+let saveTimeout;
+function debouncedSaveSettings() {
+  clearTimeout(saveTimeout);
+
+  saveTimeout = setTimeout(async () => {
+    if (editorState.logoId && editorState.needsSave) {
+      try {
+        const updateData = {
+          font: editorState.font,
+          background: editorState.background,
+        };
+
+        await api.updateLogo(editorState.logoId, updateData);
+        console.log('Editor settings saved');
+      } catch (error) {
+        console.error('Save editor settings error:', error);
+      }
+    }
+  }, 500); // 500ms debounce
+}
+
+/**
+ * Возврат к вариантам
+ */
+function backToResults() {
+  // Сохраняем перед выходом
+  if (editorState.logoId) {
+    debouncedSaveSettings();
+  }
+  
+  show('results');
+}
+
+/**
+ * Переход к экспорту
+ */
+async function goToExport() {
+  // Сохраняем перед переходом
+  if (editorState.logoId) {
+    try {
+      const updateData = {
+        font: editorState.font,
+        background: editorState.background,
+      };
+
+      await api.updateLogo(editorState.logoId, updateData);
+      console.log('Editor settings saved before export');
+    } catch (error) {
+      console.error('Save before export error:', error);
+    }
+  }
+
+  show('export');
+}
+
+/**
+ * Открывает редактор для выбранного логотипа
+ */
+async function openEditorForLogo(logoId) {
+  console.log('Opening editor for logo:', logoId);
+
+  // Загружаем данные в редактор
+  await loadEditorData(logoId);
+
+  // Показываем редактор
+  show('editor');
 }
 
 /* SAVE DRAFT */
@@ -2473,8 +2872,14 @@ function checkAllGridsForEmptyState() {
        
        // Перебрасываем ошибку для обработки в confirmDelete
        throw error;
-     }
   }
+}
+
+// Export functions for global use
+window.handleLogin = handleLogin;
+window.handleRegister = handleRegister;
+window.switchTab = switchTab;
+window.handleDelete = handleDelete;
 
 /* TOAST */
 let tTimer;

@@ -1405,6 +1405,8 @@ window.api = {
   updateCounters,
   updateSubscriptionUI,
   updateUserUI,
+  isAuthenticated,
+  logout,
   // Logo editor API
   getLogo,
   updateLogo,
@@ -1419,3 +1421,5 @@ window.updateUserUI = updateUserUI;
 window.updateCounters = updateCounters;
 window.showDeleteModal = showDeleteModal;
 window.downloadProject = downloadProject;
+window.isAuthenticated = isAuthenticated;
+window.logout = logout;
