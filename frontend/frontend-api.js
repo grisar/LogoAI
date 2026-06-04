@@ -1276,6 +1276,78 @@ function updateUserUI() {
   }
 }
 
+// ==================== LOGO EDITOR API ====================
+
+/**
+ * Get specific logo data for editor
+ */
+async function getLogo(logoId) {
+  const response = await authFetch(`${API_BASE_URL}/api/logos/${logoId}`);
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to get logo');
+  }
+
+  const data = await response.json();
+  console.log('Logo data loaded:', data);
+  return data;
+}
+
+/**
+ * Update logo settings (font, background, selection)
+ */
+async function updateLogo(logoId, updateData) {
+  const response = await authFetch(`${API_BASE_URL}/api/logos/${logoId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(updateData),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to update logo');
+  }
+
+  const data = await response.json();
+  console.log('Logo updated:', data);
+  return data;
+}
+
+/**
+ * Save logo as draft
+ */
+async function saveLogoDraft(logoId, updateData = {}) {
+  const response = await authFetch(`${API_BASE_URL}/api/logos/${logoId}/draft`, {
+    method: 'POST',
+    body: JSON.stringify(updateData),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to save draft');
+  }
+
+  const data = await response.json();
+  console.log('Logo saved as draft:', data);
+  return data;
+}
+
+/**
+ * Get all logos for a project
+ */
+async function getProjectLogos(projectId) {
+  const response = await authFetch(`${API_BASE_URL}/api/logos/project/${projectId}`);
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to get project logos');
+  }
+
+  const data = await response.json();
+  console.log('Project logos loaded:', data.count, 'logos');
+  return data.logos;
+}
+
 /**
  * Initialize app
  */
@@ -1333,6 +1405,11 @@ window.api = {
   updateCounters,
   updateSubscriptionUI,
   updateUserUI,
+  // Logo editor API
+  getLogo,
+  updateLogo,
+  saveLogoDraft,
+  getProjectLogos,
 };
 
 // Export functions for global use
