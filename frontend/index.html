@@ -1738,30 +1738,63 @@ async function pollGenerationStatus() {
   let attempts = 0;
   const maxAttempts = 30; // 2 минуты максимум
 
+  console.log('Starting polling for prediction:', currentPredictionId);
+
   genTimer=setInterval(async()=>{
     try {
       attempts++;
       progress = Math.min(progress + Math.random() * 5 + 2, 95);
 
+      console.log(`Poll attempt ${attempts}/${maxAttempts}, progress: ${progress.toFixed(1)}%`);
+
       const result = await api.pollGenerationStatus(currentPredictionId);
 
-      if (result.status === 'completed') {
+      console.log('Poll result:', result);
+
+      if (result.status === 'completed' || result.status === 'succeeded') {
+        console.log('Generation completed!');
         progress = 100;
         clearInterval(genTimer);
 
+        fill.style.width='100%';
+        pct.textContent='100%';
+        msg.textContent='Готово!';
+
         // Получаем проект с результатами
+        console.log('Fetching project:', currentProjectId);
         const project = await api.getProject(currentProjectId);
+        console.log('Project data:', project);
+
+        // Проверяем, есть ли логотипы
+        if (!project.logos || project.logos.length === 0) {
+          console.error('No logos in project response');
+          toast('Ошибка: логотипы не сгенерированы');
+          show('gen');
+          return;
+        }
+
+        console.log('Logos found:', project.logos.length);
 
         document.getElementById('gen-state').style.display='none';
         document.getElementById('res-state').style.display='';
 
         // Рендерим результаты
         renderResults(project.logos);
+
+        // Автоматически открываем редактор через 1 секунду
+        setTimeout(() => {
+          console.log('Opening editor...');
+          show('editor');
+        }, 1000);
+
       } else if (result.status === 'failed') {
+        console.error('Generation failed:', result.error);
         clearInterval(genTimer);
         toast('Ошибка генерации: ' + (result.error || 'Неизвестная ошибка'));
         show('gen');
         return;
+      } else if (result.status === 'processing' || result.status === 'starting') {
+        console.log('Generation still processing...');
       }
 
       fill.style.width=progress+'%';
@@ -1774,6 +1807,7 @@ async function pollGenerationStatus() {
       else msg.textContent = 'Готово!';
 
       if (attempts >= maxAttempts) {
+        console.error('Max attempts reached');
         clearInterval(genTimer);
         toast('Время ожидания истекло');
         show('gen');
@@ -1782,7 +1816,7 @@ async function pollGenerationStatus() {
     } catch (error) {
       console.error('Poll error:', error);
       clearInterval(genTimer);
-      toast('Ошибка при получении статуса');
+      toast('Ошибка при получении статуса: ' + error.message);
       show('gen');
     }
   },2000);
