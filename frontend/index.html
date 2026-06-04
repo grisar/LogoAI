@@ -911,6 +911,10 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
           <span class="chip" onclick="tog(this)">Спорт</span>
           <span class="chip" onclick="tog(this)">Другое</span>
         </div>
+        <!-- Текстовое поле для кастомной ниши (скрыто по умолчанию) -->
+        <div id="custom-niche-field" style="display:none;margin-top:var(--s3)">
+          <input type="text" id="custom-niche-input" placeholder="Введите вашу нишу" style="padding:var(--s3) var(--s4);background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);font-size:var(--sm);width:100%;font-family:var(--font-b);color:var(--text)">
+        </div>
       </div>
       <button class="btn btn-violet" onclick="gstep(2)">Далее →</button>
     </div>
@@ -1600,6 +1604,23 @@ function scrollToSec(id){
 
 /* WIZARD */
 function gstep(n){
+  // Валидация перед переходом на шаг 2 (сфера/ниша)
+  if (n === 2) {
+    const nicheChips = document.querySelectorAll('#ws1 .chip');
+    const nicheEl = Array.from(nicheChips).find(chip => chip.classList.contains('on'));
+
+    if (nicheEl && nicheEl.textContent === 'Другое') {
+      const customNicheInput = document.getElementById('custom-niche-input');
+      const customNiche = customNicheInput?.value?.trim();
+
+      if (!customNiche) {
+        toast('Укажите вашу нишу');
+        customNicheInput.focus();
+        return; // Не даем перейти на следующий шаг
+      }
+    }
+  }
+
   document.querySelectorAll('.wstep').forEach(s=>s.classList.remove('active'));
   document.getElementById('ws'+n).classList.add('active');
   for(let i=1;i<=3;i++){
@@ -1636,10 +1657,34 @@ async function startGen(){
       return;
     }
 
-    // Получаем сферу/нишу из первого шага (первый выбранный chip в .tag-row)
+    // Получаем сферу/нишу из первого шага
     const nicheChips = document.querySelectorAll('#ws1 .chip');
     const nicheEl = Array.from(nicheChips).find(chip => chip.classList.contains('on'));
-    const niche = nicheEl?.textContent?.trim() || 'design'; // Значение по умолчанию
+
+    let niche = 'design'; // Значение по умолчанию
+
+    if (nicheEl) {
+      const nicheText = nicheEl.textContent?.trim();
+
+      // Если выбрано "Другое" - берём значение из текстового поля
+      if (nicheText === 'Другое') {
+        const customNicheInput = document.getElementById('custom-niche-input');
+        const customNiche = customNicheInput?.value?.trim();
+
+        if (!customNiche) {
+          toast('Укажите вашу нишу');
+          show('gen');
+          return;
+        }
+
+        niche = customNiche;
+        console.log('Using custom niche:', niche);
+      } else {
+        // Иначе используем выбранный чип
+        niche = nicheText;
+        console.log('Using selected niche:', niche);
+      }
+    }
 
     // Получаем стиль из второго шага (первый выбранный chip во втором .tag-row)
     const styleChips = document.querySelectorAll('#ws2 .chip');
@@ -1777,7 +1822,25 @@ function renderResults(logos) {
 }
 
 /* CHIP TOGGLES */
-function tog(el){el.classList.toggle('on')}
+function tog(el){
+  el.classList.toggle('on');
+
+  // Если чип "Другое" был выбран/снят - показываем/скрываем поле кастомной ниши
+  const parentRow = el.closest('.tag-row');
+  const otherChip = Array.from(parentRow.querySelectorAll('.chip')).find(chip => chip.textContent === 'Другое');
+  const customNicheField = document.getElementById('custom-niche-field');
+  const customNicheInput = document.getElementById('custom-niche-input');
+
+  if (otherChip && otherChip.classList.contains('on')) {
+    // Показываем поле кастомной ниши
+    customNicheField.style.display = 'block';
+    customNicheInput.focus();
+  } else {
+    // Скрываем поле и очищаем значение
+    customNicheField.style.display = 'none';
+    customNicheInput.value = '';
+  }
+}
 function togSingle(el){
   el.parentElement.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
   el.classList.add('on');
@@ -2528,7 +2591,7 @@ async function handleLogin() {
   }
 
   try {
-    const data = await api.login(email, password);
+    const data = await window.api.login(email, password);
     currentUser = data.user;
     toast('Добро пожаловать, ' + data.user.name + '!');
     updateUserUI();
@@ -2562,7 +2625,7 @@ async function handleRegister() {
 }
 
 function handleLogout() {
-  api.logout();
+  window.api.logout();
   currentUser = null;
   currentSubscription = null;
   updateUserUI();

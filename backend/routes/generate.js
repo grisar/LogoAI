@@ -130,10 +130,11 @@ router.post('/sync', authenticateToken, async (req, res) => {
 
 /**
  * Start async generation
- * 
+ *
  * Принимает параметры генерации логотипа:
  * - brandName (обязательно): название бренда
  * - niche (опционально, по умолчанию 'design'): сфера/ниша бизнеса
+ * - customNiche (опционально): кастомная ниша, введённая пользователем
  * - style (опционально, по умолчанию 'minimalist'): стиль логотипа
  * - colors (опционально, по умолчанию ['#C68DFF']): массив цветов
  * - textPrompt (опционально): текстовый промпт для FLUX.1 (Pro функция)
@@ -148,12 +149,18 @@ router.post('/async', authenticateToken, async (req, res) => {
     console.log('Async generation request:', {
       brandName: params.brandName,
       niche: params.niche,
+      customNiche: params.customNiche,
       style: params.style,
       colors: params.colors,
       textPrompt: params.textPrompt ? '***' : undefined,
       numVariants: params.numVariants,
       userId: userId
     });
+
+    // Определяем финальную нишу: используем customNiche если есть, иначе niche
+    const finalNiche = params.customNiche?.trim() || params.niche?.trim() || 'design';
+
+    console.log('Final niche for generation:', finalNiche, '(custom:', !!params.customNiche, ')');
 
     // Check user's plan limits (same as sync)
     const subResult = await query(
@@ -183,33 +190,32 @@ router.post('/async', authenticateToken, async (req, res) => {
          VALUES ($1, $2, $3, $4, $5, $6, 'generating')
          RETURNING id`,
         [
-          userId, 
-          params.brandName, 
-          params.niche || 'design',      // сфера/ниша
+          userId,
+          params.brandName,
+          finalNiche,                    // Используем финальную нишу (custom или выбранную)
           params.style || 'minimalist',   // стиль логотипа
           JSON.stringify(params.colors || ['#C68DFF']), // массив цветов
           params.textPrompt               // текстовый промпт (Pro)
         ]
       );
       projectId = projectResult.rows[0].id;
-      console.log('Created project with ID:', projectId);
+      console.log('Created project with ID:', projectId, 'and niche:', finalNiche);
     }
 
-    // Передаём все параметры (включая niche, style, colors) в сервис генерации
+    // Передаём все параметры (включая finalNiche) в сервис генерации
     const predictionResult = await createPrediction({
       brandName: params.brandName,
-      niche: params.niche || 'design',
+      niche: finalNiche,               // Передаём финальную нишу в сервис генерации
       style: params.style || 'minimalist',
       colors: params.colors || ['#C68DFF'],
       textPrompt: params.textPrompt,
       numVariants: params.numVariants || 4,
     });
 
-    // Если синхронная генерация (без predictionId), сохраняем результаты напрямую
+    // Если синхронная генерация, сохраняем результаты напрямую
     if (predictionResult.status === 'succeeded' && predictionResult.output) {
       const images = predictionResult.output;
 
-      // Сохраняем логотипы
       const logoInserts = images.map((url, index) =>
         query(
           `INSERT INTO logos (project_id, generation_id, variant_index, png_url)
@@ -221,11 +227,7 @@ router.post('/async', authenticateToken, async (req, res) => {
 
       const logos = await Promise.all(logoInserts);
 
-      // Обновляем статус проекта
-      await query(
-        `UPDATE projects SET status = 'done' WHERE id = $1`,
-        [projectId]
-      );
+      await query(`UPDATE projects SET status = 'done' WHERE id = $1`, [projectId]);
 
       res.json({
         success: true,

@@ -362,6 +362,7 @@ async function generateLogosSync(params) {
  * @param {Object} params - Generation parameters
  * @param {string} params.brandName - Brand name (required)
  * @param {string} params.niche - Niche/category (default: 'design')
+ * @param {string} params.customNiche - Custom niche input (optional)
  * @param {string} params.style - Logo style (default: 'minimalist')
  * @param {string[]} params.colors - Color array (default: ['#C68DFF'])
  * @param {string} params.textPrompt - Custom FLUX.1 prompt (optional, Pro feature)
@@ -369,10 +370,50 @@ async function generateLogosSync(params) {
  * @param {number} params.numVariants - Number of variants (1-4, default: 4)
  */
 async function startGeneration(params) {
-  // Валидация параметров
+  // Валидация обязательных параметров
   if (!params.brandName || params.brandName.trim() === '') {
     throw new Error('Название бренда обязательно');
   }
+
+  // Определяем итоговую нишу: используем customNiche если есть, иначе niche
+  const finalNiche = params.customNiche?.trim() || params.niche?.trim() || 'design';
+
+  console.log('Final niche selected:', finalNiche, '(custom:', !!params.customNiche, ')');
+
+  // Значения по умолчанию
+  const validatedParams = {
+    brandName: params.brandName.trim(),
+    niche: finalNiche,         // Используем финальную нишу
+    style: params.style?.trim() || 'minimalist',
+    colors: Array.isArray(params.colors) && params.colors.length > 0 ? params.colors : ['#C68DFF'],
+    numVariants: Math.min(Math.max(params.numVariants || 4, 1), 4),
+  };
+
+  // Добавляем опциональные параметры
+  if (params.textPrompt && params.textPrompt.trim()) {
+    validatedParams.textPrompt = params.textPrompt.trim();
+  }
+
+  if (params.projectId) {
+    validatedParams.projectId = params.projectId;
+  }
+
+  console.log('Starting generation with params:', validatedParams);
+
+  const response = await authFetch(`${API_BASE_URL}/api/generate/async`, {
+    method: 'POST',
+    body: JSON.stringify(validatedParams),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to start generation');
+  }
+
+  const data = await response.json();
+  console.log('Generation started:', data);
+  return data;
+}
 
   // Значения по умолчанию
   const validatedParams = {
