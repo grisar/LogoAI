@@ -3095,10 +3095,24 @@ window.closeDeleteModal = closeDeleteModal;
 document.getElementById('em')?.parentElement?.parentElement?.querySelector('.btn-violet')?.setAttribute('onclick', 'handleLogin()');
 document.getElementById('em')?.parentElement?.parentElement?.querySelector('.btn-secondary')?.setAttribute('onclick', 'handleRegister()');
 
-// Initialize AFTER all functions are exported
-window.onload = function() {
+// Initialize AFTER all functions are exported - use addEventListener to avoid conflicts
+window.addEventListener('load', function() {
+  // Debug: check if all required functions are available
+  console.log('=== LogoAI Debug Info ===');
+  console.log('show function:', typeof window.show);
+  console.log('scrollToSec function:', typeof window.scrollToSec);
+  console.log('isAuthenticated function:', typeof window.isAuthenticated);
+  console.log('handleLogin function:', typeof window.handleLogin);
+  console.log('handleRegister function:', typeof window.handleRegister);
+  console.log('tog function:', typeof window.tog);
+  console.log('gstep function:', typeof window.gstep);
+  console.log('selSw function:', typeof window.selSw);
+  console.log('startGen function:', typeof window.startGen);
+  console.log('selRes function:', typeof window.selRes);
+  
+  // Initialize app
   initApp();
-};
+}, { once: true });
 
 </script>
 </body>
