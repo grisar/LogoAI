@@ -1,0 +1,36 @@
+{
+  "name": "logoai-backend",
+  "version": "1.0.0",
+  "description": "Backend for LogoAI - Logo generation service with FLUX.1",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "init-db": "node scripts/init-db.js",
+    "migrate": "node scripts/migrate.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "logo",
+    "generation",
+    "flux",
+    "gan",
+    "ai",
+    "express"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.16.1",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "node-cron": "^4.2.1",
+    "pg": "^8.21.0",
+    "replicate": "^1.4.0",
+    "sharp": "^0.34.5",
+    "zod": "^4.4.3"
+  }
+}
