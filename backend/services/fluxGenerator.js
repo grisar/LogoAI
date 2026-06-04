@@ -39,44 +39,70 @@ const NICHE_PROMPTS = {
 
 /**
  * Build a prompt for FLUX.1 based on user inputs
+ * 
+ * Формирует промпт для модели FLUX.1, используя:
+ * - brandName: название бренда
+ * - niche: сфера/ниша бизнеса (например: Технологии, Дизайн, Медицина)
+ * - style: стиль логотипа (например: Минималистичный, Геометрический, Винтаж)
+ * - colors: основной цвет логотипа (например: #C68DFF)
+ * - textPrompt: кастомный текстовый промпт (Pro функция)
  */
 function buildPrompt(params) {
   const { brandName, niche, style, colors, textPrompt } = params;
 
   let prompt = '';
 
-  // Custom FLUX.1 prompt (Pro feature)
+  // Кастомный FLUX.1 промпт (Pro функция)
   if (textPrompt && textPrompt.trim()) {
     prompt = textPrompt.trim();
   } else {
-    // Build prompt from wizard parameters
+    // Формируем промпт из параметров мастера генерации
     prompt = `Professional logo design for "${brandName}"`;
 
-    // Add niche
+    // Добавляем сферу/нишу (выбирает отрасль бизнеса)
     if (niche && NICHE_PROMPTS[niche]) {
       prompt += `, ${NICHE_PROMPTS[niche]}`;
+      console.log(`Added niche to prompt: ${niche} -> ${NICHE_PROMPTS[niche]}`);
+    } else if (niche) {
+      // Если ниша не в маппинге, добавляем как есть
+      prompt += `, ${niche.toLowerCase()} business`;
+      console.log(`Added niche as-is to prompt: ${niche}`);
     }
 
-    // Add style
+    // Добавляем стиль (определяет визуальный стиль логотипа)
     if (style && STYLE_PROMPTS[style]) {
       prompt += `, ${STYLE_PROMPTS[style]}`;
+      console.log(`Added style to prompt: ${style} -> ${STYLE_PROMPTS[style]}`);
+    } else if (style) {
+      // Если стиль не в маппинге, добавляем как есть
+      prompt += `, ${style.toLowerCase()} style`;
+      console.log(`Added style as-is to prompt: ${style}`);
     }
 
-    // Add colors
+    // Добавляем цвета (определяет основную цветовую схему)
     if (colors && colors.length > 0) {
       const colorDescriptions = colors
         .map((color) => COLOR_PROMPTS[color] || '')
-        .filter(Boolean)
-        .join(', ');
-      if (colorDescriptions) {
-        prompt += `, ${colorDescriptions}`;
+        .filter(Boolean);
+      
+      if (colorDescriptions.length > 0) {
+        prompt += `, ${colorDescriptions.join(', ')}`;
+        console.log(`Added colors to prompt: ${colors.join(', ')} -> ${colorDescriptions.join(', ')}`);
+      } else {
+        // Если цвет не в маппинге, добавляем hex-значение
+        const primaryColor = colors[0];
+        if (primaryColor) {
+          prompt += `, main color ${primaryColor}`;
+          console.log(`Added color hex to prompt: ${primaryColor}`);
+        }
       }
     }
 
-    // Add technical specifications for better logo generation
+    // Технические спецификации для лучшей генерации логотипов
     prompt += ', vector style, clean, white background, high quality, professional logo design';
   }
 
+  console.log('Final generated prompt:', prompt);
   return prompt;
 }
 

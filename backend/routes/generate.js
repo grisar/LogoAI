@@ -130,11 +130,30 @@ router.post('/sync', authenticateToken, async (req, res) => {
 
 /**
  * Start async generation
+ * 
+ * Принимает параметры генерации логотипа:
+ * - brandName (обязательно): название бренда
+ * - niche (опционально, по умолчанию 'design'): сфера/ниша бизнеса
+ * - style (опционально, по умолчанию 'minimalist'): стиль логотипа
+ * - colors (опционально, по умолчанию ['#C68DFF']): массив цветов
+ * - textPrompt (опционально): текстовый промпт для FLUX.1 (Pro функция)
+ * - projectId (опционально): ID существующего проекта
+ * - numVariants (опционально, по умолчанию 4): количество вариантов (1-4)
  */
 router.post('/async', authenticateToken, async (req, res) => {
   try {
     const params = generateSchema.parse(req.body);
     const userId = req.user.id;
+
+    console.log('Async generation request:', {
+      brandName: params.brandName,
+      niche: params.niche,
+      style: params.style,
+      colors: params.colors,
+      textPrompt: params.textPrompt ? '***' : undefined,
+      numVariants: params.numVariants,
+      userId: userId
+    });
 
     // Check user's plan limits (same as sync)
     const subResult = await query(
@@ -148,6 +167,7 @@ router.post('/async', authenticateToken, async (req, res) => {
 
     const subscription = subResult.rows[0] || { plan_type: 'free', status: 'active' };
 
+    // Pro feature check: text prompt only available on Pro plan
     if (params.textPrompt && subscription.plan_type !== 'pro') {
       return res.status(403).json({
         error: 'Text prompt feature is only available on Pro plan',
@@ -155,26 +175,41 @@ router.post('/async', authenticateToken, async (req, res) => {
       });
     }
 
-    // Create project if not provided
+    // Создаём проект с тремя новыми параметрами: niche, style, colors
     let projectId = params.projectId;
     if (!projectId) {
       const projectResult = await query(
         `INSERT INTO projects (user_id, name, niche, style, colors, text_prompt, status)
          VALUES ($1, $2, $3, $4, $5, $6, 'generating')
          RETURNING id`,
-        [userId, params.brandName, params.niche, params.style, JSON.stringify(params.colors || []), params.textPrompt]
+        [
+          userId, 
+          params.brandName, 
+          params.niche || 'design',      // сфера/ниша
+          params.style || 'minimalist',   // стиль логотипа
+          JSON.stringify(params.colors || ['#C68DFF']), // массив цветов
+          params.textPrompt               // текстовый промпт (Pro)
+        ]
       );
       projectId = projectResult.rows[0].id;
+      console.log('Created project with ID:', projectId);
     }
 
-    // Create prediction with FLUX.1
-    const predictionResult = await createPrediction(params);
+    // Передаём все параметры (включая niche, style, colors) в сервис генерации
+    const predictionResult = await createPrediction({
+      brandName: params.brandName,
+      niche: params.niche || 'design',
+      style: params.style || 'minimalist',
+      colors: params.colors || ['#C68DFF'],
+      textPrompt: params.textPrompt,
+      numVariants: params.numVariants || 4,
+    });
 
-    // If synchronous generation (no predictionId), save results directly
+    // Если синхронная генерация (без predictionId), сохраняем результаты напрямую
     if (predictionResult.status === 'succeeded' && predictionResult.output) {
       const images = predictionResult.output;
 
-      // Save logos directly
+      // Сохраняем логотипы
       const logoInserts = images.map((url, index) =>
         query(
           `INSERT INTO logos (project_id, generation_id, variant_index, png_url)
@@ -186,7 +221,7 @@ router.post('/async', authenticateToken, async (req, res) => {
 
       const logos = await Promise.all(logoInserts);
 
-      // Update project status
+      // Обновляем статус проекта
       await query(
         `UPDATE projects SET status = 'done' WHERE id = $1`,
         [projectId]
@@ -207,7 +242,7 @@ router.post('/async', authenticateToken, async (req, res) => {
       return;
     }
 
-    // Create generation record for async generation
+    // Создаём запись генерации для асинхронной генерации
     const genResult = await query(
       `INSERT INTO generations (user_id, project_id, status, replicate_prediction_id, started_at)
        VALUES ($1, $2, 'processing', $3, NOW())

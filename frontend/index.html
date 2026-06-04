@@ -1628,31 +1628,46 @@ async function startGen(){
     document.getElementById('gen-state').style.display='';
     document.getElementById('res-state').style.display='none';
 
-    // Получаем параметры из wizard
-    const brandName = document.getElementById('bname')?.value || '';
+    // Получаем название бренда
+    const brandName = document.getElementById('bname')?.value?.trim() || '';
     if (!brandName) {
       toast('Введите название бренда');
       show('gen');
       return;
     }
 
-    // Получаем выбранные категории
-    const nicheEl = document.querySelector('.chip.on');
-    const styleEl = document.querySelectorAll('.chip.on')[1];
+    // Получаем сферу/нишу из первого шага (первый выбранный chip в .tag-row)
+    const nicheChips = document.querySelectorAll('#ws1 .chip');
+    const nicheEl = Array.from(nicheChips).find(chip => chip.classList.contains('on'));
+    const niche = nicheEl?.textContent?.trim() || 'design'; // Значение по умолчанию
 
+    // Получаем стиль из второго шага (первый выбранный chip во втором .tag-row)
+    const styleChips = document.querySelectorAll('#ws2 .chip');
+    const styleEl = Array.from(styleChips).find(chip => chip.classList.contains('on'));
+    const style = styleEl?.textContent?.trim() || 'minimalist'; // Значение по умолчанию
+
+    // Получаем цвет из выбранного swatch
+    const colorSwatch = document.querySelector('.sw.on');
+    const primaryColor = colorSwatch?.style?.background || '#C68DFF'; // Значение по умолчанию (фиолетовый)
+
+    // Проверяем Pro функцию (текстовый промпт)
+    const textPrompt = document.querySelector('textarea[placeholder*="FLUX.1"]')?.value?.trim() || '';
+
+    // Формируем параметры для генерации
     const params = {
       brandName,
-      niche: nicheEl?.textContent?.trim() || 'design',
-      style: styleEl?.textContent?.trim() || 'minimalist',
-      colors: ['#C68DFF'],
+      niche,
+      style,
+      colors: [primaryColor],
       numVariants: 4
     };
 
-    // Проверяем Pro функцию (текстовый промпт)
-    const textPrompt = document.querySelector('textarea[placeholder*="FLUX.1"]')?.value?.trim();
+    // Добавляем текстовый промпт только если он есть
     if (textPrompt) {
       params.textPrompt = textPrompt;
     }
+
+    console.log('Generation params:', params);
 
     // Запускаем генерацию через API
     const data = await api.startGeneration(params);
@@ -1770,8 +1785,12 @@ function togSingle(el){
 
 /* SWATCH SELECTION */
 function selSw(el){
+  // Убираем класс 'on' со всех swatches в этой группе
   el.closest('.swatches').querySelectorAll('.sw').forEach(s=>s.classList.remove('on'));
+  // Добавляем класс 'on' выбранному элементу
   el.classList.add('on');
+  // Логируем выбранный цвет для отладки
+  console.log('Selected color:', el.style.background);
 }
 
 /* EDITOR — смена цвета SVG */

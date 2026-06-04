@@ -357,10 +357,46 @@ async function generateLogosSync(params) {
 /**
  * Start async generation
  */
+/**
+ * Start async generation
+ * @param {Object} params - Generation parameters
+ * @param {string} params.brandName - Brand name (required)
+ * @param {string} params.niche - Niche/category (default: 'design')
+ * @param {string} params.style - Logo style (default: 'minimalist')
+ * @param {string[]} params.colors - Color array (default: ['#C68DFF'])
+ * @param {string} params.textPrompt - Custom FLUX.1 prompt (optional, Pro feature)
+ * @param {string} params.projectId - Existing project ID (optional)
+ * @param {number} params.numVariants - Number of variants (1-4, default: 4)
+ */
 async function startGeneration(params) {
+  // Валидация параметров
+  if (!params.brandName || params.brandName.trim() === '') {
+    throw new Error('Название бренда обязательно');
+  }
+
+  // Значения по умолчанию
+  const validatedParams = {
+    brandName: params.brandName.trim(),
+    niche: params.niche?.trim() || 'design',
+    style: params.style?.trim() || 'minimalist',
+    colors: Array.isArray(params.colors) && params.colors.length > 0 ? params.colors : ['#C68DFF'],
+    numVariants: Math.min(Math.max(params.numVariants || 4, 1), 4),
+  };
+
+  // Добавляем опциональные параметры
+  if (params.textPrompt && params.textPrompt.trim()) {
+    validatedParams.textPrompt = params.textPrompt.trim();
+  }
+
+  if (params.projectId) {
+    validatedParams.projectId = params.projectId;
+  }
+
+  console.log('Starting generation with params:', validatedParams);
+
   const response = await authFetch(`${API_BASE_URL}/api/generate/async`, {
     method: 'POST',
-    body: JSON.stringify(params),
+    body: JSON.stringify(validatedParams),
   });
 
   if (!response.ok) {
@@ -369,6 +405,7 @@ async function startGeneration(params) {
   }
 
   const data = await response.json();
+  console.log('Generation started:', data);
   return data;
 }
 
