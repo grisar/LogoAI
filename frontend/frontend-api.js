@@ -415,41 +415,6 @@ async function startGeneration(params) {
   return data;
 }
 
-  // Значения по умолчанию
-  const validatedParams = {
-    brandName: params.brandName.trim(),
-    niche: params.niche?.trim() || 'design',
-    style: params.style?.trim() || 'minimalist',
-    colors: Array.isArray(params.colors) && params.colors.length > 0 ? params.colors : ['#C68DFF'],
-    numVariants: Math.min(Math.max(params.numVariants || 4, 1), 4),
-  };
-
-  // Добавляем опциональные параметры
-  if (params.textPrompt && params.textPrompt.trim()) {
-    validatedParams.textPrompt = params.textPrompt.trim();
-  }
-
-  if (params.projectId) {
-    validatedParams.projectId = params.projectId;
-  }
-
-  console.log('Starting generation with params:', validatedParams);
-
-  const response = await authFetch(`${API_BASE_URL}/api/generate/async`, {
-    method: 'POST',
-    body: JSON.stringify(validatedParams),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to start generation');
-  }
-
-  const data = await response.json();
-  console.log('Generation started:', data);
-  return data;
-}
-
 /**
  * Poll generation status
  */
