@@ -2875,29 +2875,6 @@ function checkAllGridsForEmptyState() {
   }
 }
 
-// Export functions for global use
-window.handleLogin = handleLogin;
-window.handleRegister = handleRegister;
-window.switchTab = switchTab;
-window.handleDelete = handleDelete;
-window.show = show;
-window.scrollToSec = scrollToSec;
-window.handleLogout = handleLogout;
-window.tog = tog;
-window.gstep = gstep;
-window.selSw = selSw;
-window.startGen = startGen;
-window.selRes = selRes;
-window.edSelectColor = edSelectColor;
-window.edSetFont = edSetFont;
-window.edSetBackground = edSetBackground;
-window.selectLogo = selectLogo;
-window.openEditor = openEditor;
-window.saveDraft = saveDraft;
-window.downloadExport = downloadExport;
-window.confirmDelete = confirmDelete;
-window.closeDeleteModal = closeDeleteModal;
-
 /* TOAST */
 let tTimer;
 function toast(msg){
@@ -3090,6 +3067,29 @@ function handleLogout() {
     btn.onclick = () => show('auth');
   });
 }
+
+// Export functions for global use - MUST be after function definitions
+window.handleLogin = handleLogin;
+window.handleRegister = handleRegister;
+window.switchTab = switchTab;
+window.handleDelete = handleDelete;
+window.show = show;
+window.scrollToSec = scrollToSec;
+window.handleLogout = handleLogout;
+window.tog = tog;
+window.gstep = gstep;
+window.selSw = selSw;
+window.startGen = startGen;
+window.selRes = selRes;
+window.edSelectColor = edSelectColor;
+window.edSetFont = edSetFont;
+window.edSetBackground = edSetBackground;
+window.selectLogo = selectLogo;
+window.openEditor = openEditor;
+window.saveDraft = saveDraft;
+window.downloadExport = downloadExport;
+window.confirmDelete = confirmDelete;
+window.closeDeleteModal = closeDeleteModal;
 
 // Обновляем кнопки в форме авторизации
 document.getElementById('em')?.parentElement?.parentElement?.querySelector('.btn-violet')?.setAttribute('onclick', 'handleLogin()');
