@@ -1010,7 +1010,7 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
       </div>
       <div class="results-actions">
         <button class="btn btn-secondary" onclick="show('gen')">← Изменить параметры</button>
-        <button class="btn btn-violet" onclick="show('editor')">Редактировать →</button>
+        <button class="btn btn-violet" onclick="openEditor()">Редактировать →</button>
       </div>
     </div>
   </div>
@@ -1022,48 +1022,45 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
     <div class="ed-main">
       <div class="pg-title">Редактор логотипа</div>
       <div class="canvas-area">
-        <svg viewBox="0 0 200 200" fill="none" width="220" height="220" id="ed-canvas">
-          <circle cx="100" cy="100" r="70" stroke="#C68DFF" stroke-width="5"/>
-          <text x="100" y="115" text-anchor="middle" font-size="56" font-family="Unbounded,serif" fill="#C68DFF" font-weight="700">Ax</text>
-        </svg>
+        <img id="ed-canvas" src="" width="220" height="220" alt="Logo" style="object-fit:contain">
       </div>
       <div class="ed-toolbar">
         <div class="ed-tool-group">
           <div class="ed-tool-label">Цвет элементов</div>
           <div class="swatches">
-            <div class="sw on" style="background:#C68DFF" onclick="selSw(this);edColor('#C68DFF')"></div>
-            <div class="sw" style="background:#CBE857" onclick="selSw(this);edColor('#CBE857')"></div>
-            <div class="sw" style="background:#323843" onclick="selSw(this);edColor('#323843')"></div>
-            <div class="sw" style="background:#5BA84A" onclick="selSw(this);edColor('#5BA84A')"></div>
-            <div class="sw" style="background:#E25A6F" onclick="selSw(this);edColor('#E25A6F')"></div>
+            <div class="sw on" style="background:#C68DFF" onclick="selSw(this);edSelectColor('#C68DFF')"></div>
+            <div class="sw" style="background:#CBE857" onclick="selSw(this);edSelectColor('#CBE857')"></div>
+            <div class="sw" style="background:#323843" onclick="selSw(this);edSelectColor('#323843')"></div>
+            <div class="sw" style="background:#5BA84A" onclick="selSw(this);edSelectColor('#5BA84A')"></div>
+            <div class="sw" style="background:#E25A6F" onclick="selSw(this);edSelectColor('#E25A6F')"></div>
           </div>
         </div>
         <div class="ed-tool-group">
           <div class="ed-tool-label">Шрифт</div>
           <div class="tag-row">
-            <span class="chip on" onclick="togSingle(this)">Unbounded</span>
-            <span class="chip" onclick="togSingle(this)">Inter</span>
-            <span class="chip" onclick="togSingle(this)">Mono</span>
+            <span class="chip on" onclick="togSingle(this);edSetFont('Unbounded')">Unbounded</span>
+            <span class="chip" onclick="togSingle(this);edSetFont('Inter')">Inter</span>
+            <span class="chip" onclick="togSingle(this);edSetFont('Mono')">Mono</span>
           </div>
         </div>
         <div class="ed-tool-group">
           <div class="ed-tool-label">Фон превью</div>
           <div class="tag-row">
-            <span class="chip on" onclick="togSingle(this)">Светлый</span>
-            <span class="chip" onclick="togSingle(this)">Тёмный</span>
-            <span class="chip" onclick="togSingle(this)">Прозрачный</span>
+            <span class="chip on" onclick="togSingle(this);edSetBackground('light')">Светлый</span>
+            <span class="chip" onclick="togSingle(this);edSetBackground('dark')">Тёмный</span>
+            <span class="chip" onclick="togSingle(this);edSetBackground('transparent')">Прозрачный</span>
           </div>
         </div>
       </div>
       <div class="btn-row">
         <button class="btn btn-secondary" onclick="show('results')">← К вариантам</button>
-        <button class="btn btn-violet" onclick="show('export')">Перейти к экспорту →</button>
+        <button class="btn btn-violet" onclick="saveEditorChanges();show('export')">Перейти к экспорту →</button>
       </div>
     </div>
     <aside class="ed-panel">
       <div class="pan-title">Предпросмотр</div>
-      <div class="mini-prev"><svg viewBox="0 0 100 100" fill="none" width="100%"><circle cx="50" cy="50" r="34" stroke="#C68DFF" stroke-width="3"/><text x="50" y="58" text-anchor="middle" font-size="26" font-family="Unbounded,serif" fill="#C68DFF" font-weight="700">Ax</text></svg></div>
-      <div class="mini-prev dark-bg"><svg viewBox="0 0 100 100" fill="none" width="100%"><circle cx="50" cy="50" r="34" stroke="#CBE857" stroke-width="3"/><text x="50" y="58" text-anchor="middle" font-size="26" font-family="Unbounded,serif" fill="#CBE857" font-weight="700">Ax</text></svg></div>
+      <div class="mini-prev"><img src="" width="100%" style="object-fit:contain"></div>
+      <div class="mini-prev dark-bg"><img src="" width="100%" style="object-fit:contain"></div>
       <div class="pan-div"></div>
       <div>
         <div class="pan-title" style="margin-bottom:var(--s3)">Параметры</div>
@@ -1075,7 +1072,7 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
         </div>
       </div>
       <div class="pan-div"></div>
-      <button class="btn btn-secondary btn-block" onclick="saveDraft()">
+      <button class="btn btn-secondary btn-block" onclick="saveLogoDraft()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
         Сохранить черновик
       </button>
@@ -1088,10 +1085,7 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
   <div class="export-wrap">
     <div class="pg-title">Экспорт логотипа</div>
     <div class="export-preview">
-      <svg viewBox="0 0 200 200" fill="none" width="200" height="200">
-        <circle cx="100" cy="100" r="70" stroke="#C68DFF" stroke-width="5"/>
-        <text x="100" y="115" text-anchor="middle" font-size="56" font-family="Unbounded,serif" fill="#C68DFF" font-weight="700">Ax</text>
-      </svg>
+      <img id="export-canvas" src="" width="200" height="200" alt="Logo" style="object-fit:contain">
     </div>
     <div class="export-formats">
       <!-- PNG -->
@@ -1155,7 +1149,7 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
       </div>
     </div>
     <div class="dl-btn-row">
-      <button class="btn btn-secondary" onclick="show('editor')">← В редактор</button>
+      <button class="btn btn-secondary" onclick="openEditor()">← В редактор</button>
       <button class="btn btn-secondary" onclick="show('dashboard')">Сохранить и выйти</button>
       <button class="btn btn-violet btn-lg" onclick="downloadFile()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -1792,6 +1786,7 @@ async function pollGenerationStatus() {
 function selRes(el){
   document.querySelectorAll('.res-card').forEach(c=>{c.classList.remove('on');const b=c.querySelector('.badge');if(b)b.remove()});
   el.classList.add('on');
+  currentLogoId = el.dataset.logoId;
   const f=el.querySelector('.res-foot');
   const b=document.createElement('span');b.className='badge badge-violet';b.textContent='Выбран';
   f.appendChild(b);
@@ -1808,7 +1803,7 @@ function renderResults(logos) {
 
   grid.innerHTML = logos
     .map((logo, index) => `
-      <div class="res-card ${index === 0 ? 'on' : ''}" onclick="selRes(this)" style="animation-delay:${index * 0.05}s">
+      <div class="res-card ${index === 0 ? 'on' : ''}" onclick="selRes(this)" data-logo-id="${logo.id}" style="animation-delay:${index * 0.05}s">
         <div class="res-thumb" style="background:#F4F4F6">
           <img src="${logo.url}" alt="Вариант ${logo.variant}" style="width:100%;height:100%;object-fit:contain">
         </div>
@@ -1819,6 +1814,32 @@ function renderResults(logos) {
       </div>
     `)
     .join('');
+  
+  if (logos.length > 0) {
+    currentLogoId = logos[0].id;
+  }
+}
+
+/* OPEN EDITOR */
+async function openEditor() {
+  if (!currentLogoId) {
+    toast('Сначала выберите логотип');
+    return;
+  }
+
+  try {
+    await loadEditorData(currentLogoId);
+    
+    const exportCanvas = document.getElementById('export-canvas');
+    if (exportCanvas && currentEditorLogo) {
+      exportCanvas.src = currentEditorLogo.png_url;
+    }
+    
+    show('editor');
+  } catch (error) {
+    console.error('Open editor error:', error);
+    toast('Ошибка при открытии редактора');
+  }
 }
 
 /* CHIP TOGGLES */
@@ -1841,9 +1862,143 @@ function tog(el){
     customNicheInput.value = '';
   }
 }
+
+/* EDITOR STATE */
+let currentEditorLogo = null;
+let currentLogoId = null;
+let editorState = {
+  color: '#C68DFF',
+  font: 'Unbounded',
+  background: 'light'
+};
+
 function togSingle(el){
   el.parentElement.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
   el.classList.add('on');
+}
+
+/* SWATCH SELECTION */
+function selSw(el){
+  el.closest('.swatches').querySelectorAll('.sw').forEach(s=>s.classList.remove('on'));
+  el.classList.add('on');
+  const selectedColor = el.style.background;
+  editorState.color = selectedColor;
+  edSelectColor(selectedColor);
+}
+
+/* EDITOR — load logo data */
+async function loadEditorData(logoId) {
+  try {
+    const logo = await window.api.getLogo(logoId);
+    currentEditorLogo = logo;
+
+    editorState = {
+      color: logo.color || '#C68DFF',
+      font: logo.font || 'Unbounded',
+      background: logo.background || 'light'
+    };
+
+    updateEditorUI();
+  } catch (error) {
+    console.error('Load editor data error:', error);
+    toast('Ошибка при загрузке логотипа');
+  }
+}
+
+/* EDITOR — update UI */
+function updateEditorUI() {
+  if (!currentEditorLogo) return;
+
+  const canvas = document.getElementById('ed-canvas');
+  if (canvas) {
+    canvas.setAttribute('src', currentEditorLogo.png_url);
+    canvas.outerHTML = `<img id="ed-canvas" src="${currentEditorLogo.png_url}" width="220" height="220" alt="Logo" style="object-fit:contain">`;
+  }
+
+  const miniPreviews = document.querySelectorAll('.mini-prev svg, .mini-prev img');
+  miniPreviews.forEach(prev => {
+    if (prev.tagName === 'SVG') {
+      prev.outerHTML = `<img src="${currentEditorLogo.png_url}" width="100%" style="object-fit:contain">`;
+    } else {
+      prev.src = currentEditorLogo.png_url;
+    }
+  });
+
+  const paramsDivs = document.querySelectorAll('[style*="display:flex;justify-content:space-between"]');
+  const paramLabels = ['Бренд', 'Ниша', 'Стиль', 'Цвет'];
+  
+  paramsDivs.forEach(div => {
+    const labelSpan = div.querySelector('span:first-child');
+    if (labelSpan && paramLabels.includes(labelSpan.textContent)) {
+      const valueSpan = div.querySelector('span:last-child');
+      if (valueSpan) {
+        const labelText = labelSpan.textContent;
+        if (labelText === 'Бренд') {
+          valueSpan.textContent = currentEditorLogo.brand_name || '';
+        } else if (labelText === 'Ниша') {
+          valueSpan.textContent = currentEditorLogo.niche || '';
+        } else if (labelText === 'Стиль') {
+          valueSpan.textContent = currentEditorLogo.style || '';
+        } else if (labelText === 'Цвет') {
+          const colorDot = valueSpan.querySelector('span');
+          if (colorDot) {
+            colorDot.style.background = editorState.color;
+          }
+        }
+      }
+    }
+  });
+
+  edSelectColor(editorState.color);
+}
+
+/* EDITOR — select color */
+function edSelectColor(color) {
+  editorState.color = color;
+  const canvas = document.getElementById('ed-canvas');
+  if (canvas && canvas.tagName === 'IMG') {
+    canvas.style.filter = `hue-rotate(0deg)`;
+  }
+  
+  const miniPreviews = document.querySelectorAll('.mini-prev img');
+  miniPreviews.forEach(img => {
+    img.style.filter = `hue-rotate(0deg)`;
+  });
+}
+
+/* EDITOR — set font */
+function edSetFont(font) {
+  editorState.font = font;
+  console.log('Font set to:', font);
+}
+
+/* EDITOR — set background */
+function edSetBackground(background) {
+  editorState.background = background;
+  const miniPreviews = document.querySelectorAll('.mini-prev');
+  miniPreviews.forEach((prev, index) => {
+    if (index === 1) {
+      if (background === 'dark') {
+        prev.classList.add('dark-bg');
+      } else {
+        prev.classList.remove('dark-bg');
+      }
+    }
+  });
+}
+
+/* EDITOR — save changes */
+async function saveEditorChanges() {
+  if (!currentEditorLogo) return;
+  
+  try {
+    await window.api.updateLogo(currentEditorLogo.id, {
+      font: editorState.font,
+      background: editorState.background
+    });
+  } catch (error) {
+    console.error('Save editor changes error:', error);
+  }
 }
 
 /* SWATCH SELECTION */
@@ -1885,6 +2040,31 @@ function downloadFile(){
 }
 
 /* SAVE DRAFT */
+/* EDITOR — save draft */
+async function saveLogoDraft() {
+  if (!currentEditorLogo) {
+    toast('Нет логотипа для сохранения');
+    return;
+  }
+
+  try {
+    await saveEditorChanges();
+    await window.api.saveLogoDraft(currentEditorLogo.id);
+    
+    if (window.projectsData) {
+      const project = window.projectsData.find(p => p.id === currentEditorLogo.project_id);
+      if (project && window.updateCounters) {
+        window.updateCounters();
+      }
+    }
+    
+    toast('Черновик сохранён');
+  } catch (error) {
+    console.error('Save logo draft error:', error);
+    toast('Ошибка при сохранении черновика');
+  }
+}
+
 async function saveDraft(){
   if (!isAuthenticated()) {
     toast('Сначала войдите в аккаунт');
@@ -2033,10 +2213,16 @@ async function openProject(id){
 
     if(project.status==='draft'){
       toast('Открываем черновик "'+project.name+'" в редакторе');
-      setTimeout(()=>show('editor'),250);
+      
+      if (project.logos && project.logos.length > 0) {
+        currentLogoId = project.logos[0].id;
+        await openEditor();
+      } else {
+        toast('Черновик не содержит логотипов');
+        setTimeout(()=>show('dashboard'),900);
+      }
     }else{
       toast('Открываем "'+project.name+'" для скачивания');
-      // Рендерим результаты
       renderResults(project.logos);
       setTimeout(()=>show('results'),250);
     }
@@ -2641,6 +2827,26 @@ function handleLogout() {
 // Обновляем кнопки в форме авторизации
 document.getElementById('em')?.parentElement?.parentElement?.querySelector('.btn-violet')?.setAttribute('onclick', 'handleLogin()');
 document.getElementById('em')?.parentElement?.parentElement?.querySelector('.btn-secondary')?.setAttribute('onclick', 'handleRegister()');
+
+// Export functions for global use (onclick handlers)
+window.show = show;
+window.scrollToSec = scrollToSec;
+window.handleLogin = handleLogin;
+window.handleRegister = handleRegister;
+window.handleLogout = handleLogout;
+window.tog = tog;
+window.gstep = gstep;
+window.selSw = selSw;
+window.startGen = startGen;
+window.selRes = selRes;
+window.switchTab = switchTab;
+window.handleDelete = handleDelete;
+window.openEditor = openEditor;
+window.edSelectColor = edSelectColor;
+window.edSetFont = edSetFont;
+window.edSetBackground = edSetBackground;
+window.saveLogoDraft = saveLogoDraft;
+window.saveEditorChanges = saveEditorChanges;
 
 // Initialize
 initApp();
