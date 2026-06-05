@@ -862,7 +862,7 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
       <p class="auth-sub">Введите данные вашего аккаунта</p>
       <div class="field"><label for="em">Email</label><input type="email" id="em" placeholder="ivan@example.com"></div>
       <div class="field"><label for="pw">Пароль</label><input type="password" id="pw" placeholder="••••••••"></div>
-      <button class="btn btn-violet btn-block" onclick="handleLogin()">Войти</button>
+      <button class="btn btn-violet btn-block" id="login-btn">Войти</button>
       <div class="auth-sw">Нет аккаунта? <button onclick="show('register')">Зарегистрироваться</button></div>
     </div>
   </div>
@@ -877,7 +877,7 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
       <div class="field"><label for="reg-em">Email</label><input type="email" id="reg-em" placeholder="ivan@example.com"></div>
       <div class="field"><label for="reg-pw">Пароль</label><input type="password" id="reg-pw" placeholder="••••••••"></div>
       <div class="field"><label for="reg-name">Имя (опционально)</label><input type="text" id="reg-name" placeholder="Иван"></div>
-      <button class="btn btn-violet btn-block" onclick="handleRegister()">Зарегистрироваться</button>
+      <button class="btn btn-violet btn-block" id="register-btn">Зарегистрироваться</button>
       <div class="auth-sw">Уже есть аккаунт? <button onclick="show('auth')">Войти</button></div>
     </div>
   </div>
@@ -2671,14 +2671,14 @@ function handleLogout() {
 
 // Обновляем кнопки в форме авторизации после загрузки DOM
 document.addEventListener('DOMContentLoaded', function() {
-  const loginBtn = document.getElementById('em')?.parentElement?.parentElement?.querySelector('.btn-violet');
+  const loginBtn = document.getElementById('login-btn');
   if (loginBtn) {
-    loginBtn.setAttribute('onclick', 'handleLogin()');
+    loginBtn.onclick = handleLogin;
   }
   
-  const registerBtn = document.getElementById('em')?.parentElement?.parentElement?.querySelector('.btn-secondary');
+  const registerBtn = document.getElementById('register-btn');
   if (registerBtn) {
-    registerBtn.setAttribute('onclick', 'handleRegister()');
+    registerBtn.onclick = handleRegister;
   }
 });
 
