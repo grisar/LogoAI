@@ -850,7 +850,7 @@ function renderProjectsGrid(projects) {
           <button class="proj-fav ${project.isFavorite || project.is_favorite ? 'on' : ''}" onclick="event.stopPropagation();handleFavorite('${project.id}', ${project.isFavorite || project.is_favorite})" aria-label="Избранное">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
           </button>
-          <button class="proj-delete" onclick="event.stopPropagation();showDeleteModal('${project.id}', '${project.name.replace(/'/g, "\\'")}')" aria-label="Удалить">
+          <button class="proj-delete" onclick="event.stopPropagation();confirmDelete('${project.id}', '${project.name.replace(/'/g, "\\'")}')" aria-label="Удалить">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="3 6 5 6 21 6"/>
               <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
@@ -982,177 +982,9 @@ async function downloadProject(projectId) {
   }
 }
 
-/**
- * Show delete confirmation modal
- */
-function showDeleteModal(projectId, projectName) {
-  console.log('showDeleteModal called from frontend-api.js with projectId:', projectId, 'projectName:', projectName);
-  
-  const modal = document.getElementById('modal-delete');
-  const title = document.getElementById('modal-delete-title');
-  const text = document.getElementById('modal-delete-text');
-  const confirmBtn = document.getElementById('modal-delete-confirm');
-  const cancelBtn = modal.querySelector('.btn-secondary');
-  const closeBtn = modal.querySelector('.modal-close');
 
-  console.log('Modal elements:', { modal: !!modal, title: !!title, text: !!text, confirmBtn: !!confirmBtn, cancelBtn: !!cancelBtn, closeBtn: !!closeBtn });
 
-  title.textContent = 'Удалить логотип?';
-  text.textContent = `Логотип "${projectName}" будет удалён без возможности восстановления.`;
-  
-  // Сохраняем ID в глобальной переменной для использования в обработчике
-  if (typeof window.projectToDelete !== 'undefined') {
-    window.projectToDelete = projectId;
-  }
-  
-  // Удаляем все старые event listeners
-  const newConfirmBtn = confirmBtn.cloneNode(true);
-  confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-  
-  const newCancelBtn = cancelBtn.cloneNode(true);
-  cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
-  
-  const newCloseBtn = closeBtn.cloneNode(true);
-  closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
-  
-  // Добавляем обработчик для кнопки "Удалить"
-  newConfirmBtn.onclick = async function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    console.log('Delete confirm button clicked, deleting:', projectId);
-    
-    try {
-      // Вызываем deleteProject из API
-      await deleteProject(projectId);
-      
-      // Закрываем модалку
-      closeModal();
-      
-      toast(`Логотип "${projectName}" удалён`);
-    } catch (error) {
-      console.error('Delete project error:', error);
-      toast('Ошибка при удалении: ' + error.message);
-      
-      // Закрываем модалку при ошибке
-      closeModal();
-    }
-  };
-  
-  // Добавляем обработчик для кнопки "Отмена"
-  newCancelBtn.onclick = function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log('Cancel button clicked');
-    closeModal();
-  };
-  
-  // Добавляем обработчик для кнопки закрытия (×)
-  newCloseBtn.onclick = function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log('Close button clicked');
-    closeModal();
-  };
 
-  modal.style.display = 'flex';
-  console.log('Modal opened');
-}
-
-function closeModal() {
-  const modal = document.getElementById('modal-delete');
-  if (modal) {
-    modal.style.display = 'none';
-    console.log('Modal closed');
-  }
-  
-  // Сбрасываем projectToDelete
-  if (typeof window.projectToDelete !== 'undefined') {
-    window.projectToDelete = null;
-  }
-  }
-
-    const token = getToken();
-    if (!token) {
-      console.error('No token found in localStorage');
-      toast('Требуется авторизация');
-      throw new Error('No token found');
-    }
-    
-    console.log('Sending DELETE request to:', `${window.API_BASE_URL}/api/projects/${projectId}`);
-    console.log('Token preview:', token.substring(0, 30) + '...');
-    console.log('User ID:', user.id);
-    
-    const response = await fetch(`${window.API_BASE_URL}/api/projects/${projectId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    console.log('DELETE response status:', response.status);
-    console.log('DELETE response ok:', response.ok);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('DELETE error response:', errorText);
-      
-      if (response.status === 401) {
-        // Token expired - need to login again
-        logout();
-        toast('Сессия истекла. Войдите снова');
-        throw new Error('Token expired');
-      } else if (response.status === 403) {
-        // Forbidden - user doesn't own the project
-        console.error('403 Forbidden: User does not own this project');
-        toast('Ошибка доступа: у вас нет прав на удаление этого проекта');
-        throw new Error('Forbidden: User does not own this project');
-      } else if (response.status === 404) {
-        // Project not found
-        console.error('404 Not Found: Project does not exist');
-        toast('Проект не найден');
-        throw new Error('Project not found');
-      } else {
-        throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
-      }
-    }
-
-    // Удаляем из window.projectsData
-    const idx = window.projectsData ? window.projectsData.findIndex(p => p.id === projectId) : -1;
-    if (idx !== -1) {
-      window.projectsData.splice(idx, 1);
-      console.log('Removed from window.projectsData, remaining:', window.projectsData.length);
-    }
-
-    // Удаляем карточку из DOM
-    const cardElement = document.querySelector(`[data-project-id="${projectId}"]`);
-    if (cardElement) {
-      console.log('Found card element, removing from DOM');
-      cardElement.classList.add('deleting');
-      setTimeout(() => {
-        cardElement.remove();
-        console.log('Card removed from DOM');
-      }, 300);
-    } else {
-      console.warn('Card element not found for projectId:', projectId);
-    }
-    
-    // Обновляем счётчики
-    updateCounters();
-    
-    // Если это страница избранного - перерендерим сетку
-    if (window.currentView === 'favorites') {
-      const favorites = (window.projectsData || []).filter(p => p.fav || p.is_favorite);
-      renderProjectsGrid(favorites);
-    }
-    
-    console.log('Project deleted successfully');
-  } catch (error) {
-    console.error('Delete project error:', error);
-    throw error;
-  }
-}
 
 // ==================== INITIALIZATION ====================
 
@@ -1300,43 +1132,19 @@ document.addEventListener('DOMContentLoaded', initApp);
 
 // Export functions for global use
 window.api = {
-  register,
-  login,
-  logout,
-  getCurrentUser,
-  updateProfile,
   getProjects,
   getProject,
   createProject,
   updateProject,
-  toggleFavorite,
-  deleteProject,
-  generateLogosSync,
-  startGeneration,
-  pollGenerationStatus,
-  cancelGeneration,
-  getSubscription,
-  createCheckout,
-  cancelSubscription,
-  getInvoices,
-  toggleTheme,
-  startLogoGeneration,
-  selectLogo,
-  loadDashboardProjects,
-  renderProjectsGrid,
-  handleFavorite,
-  openProject,
+  toggleFavorite: handleFavorite,
   downloadProject,
-  showDeleteModal,
-  updateCounters,
-  updateSubscriptionUI,
-  updateUserUI,
+  getSubscription,
+  getGenerationsCount
 };
 
-// Export functions for global use
 window.updateStatsUI = updateStatsUI;
 window.updateSubscriptionUI = updateSubscriptionUI;
 window.updateUserUI = updateUserUI;
 window.updateCounters = updateCounters;
-window.showDeleteModal = showDeleteModal;
 window.downloadProject = downloadProject;
+window.renderProjectsGrid = renderProjectsGrid;

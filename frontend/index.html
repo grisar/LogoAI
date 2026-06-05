@@ -2181,24 +2181,9 @@ function closeDeleteModal(){
   console.log('projectToDelete reset to null');
 }
 
-// Закрытие модального окна по клику на overlay
-document.addEventListener('click', function(e) {
-  const modalDeleteProject = document.getElementById('modal-delete');
-  if (modalDeleteProject && e.target === modalDeleteProject) {
-    closeDeleteModal();
-  }
-});
-
-// Закрытие по Escape
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') {
-    closeModal();
-    closeDeleteModal();
-  }
-});
-
+// Обработчики для закрытия по клику на overlay (затемнённый фон)
 document.addEventListener('DOMContentLoaded', function() {
-  // Для модалки удаления аккаунта (старый код оставлен для совместимости)
+  // Для модалки удаления аккаунта
   const modalDeleteAccount = document.getElementById('modal');
   if (modalDeleteAccount) {
     modalDeleteAccount.addEventListener('click', function(e) {
@@ -2207,6 +2192,24 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
+  
+  // Для модалки удаления логотипа
+  const modalDeleteProject = document.getElementById('modal-delete');
+  if (modalDeleteProject) {
+    modalDeleteProject.addEventListener('click', function(e) {
+      if (e.target.id === 'modal-delete') {
+        closeDeleteModal();
+      }
+    });
+  }
+  
+  // Закрытие по Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeModal();
+      closeDeleteModal();
+    }
+  });
 });
 
 /* DELETE PROJECT */
@@ -2259,9 +2262,75 @@ function confirmDelete(projectId, projectName) {
        newBtn.textContent = 'Удаление...';
        
        try {
-         console.log('Calling deleteProject with ID:', projectToDelete);
+         // 1. Сохраняем статус логотипа до удаления
+         const logo = (window.projectsData || []).find(p => p.id === projectToDelete);
+         const wasFavorite = logo && (logo.isFavorite || logo.is_favorite);
+         const wasDraft = logo && logo.status === 'draft';
+         const wasCompleted = logo && logo.status === 'done';
+         
+         console.log('Project status before delete:', { wasFavorite, wasDraft, wasCompleted });
+         
+         // 2. Отправить DELETE запрос к серверу
          await deleteProject(projectToDelete);
+         
+         // 3. Только после успешного ответа (await)
+         // - Убрать карточку из всех списков
+         if (window.projectsData) {
+           window.projectsData = window.projectsData.filter(p => p.id !== projectToDelete);
+           console.log('Removed from window.projectsData, remaining:', window.projectsData.length);
+         }
+         
+         // Удаляем карточку из DOM
+         const cardElement = document.querySelector(`[data-project-id="${projectToDelete}"]`);
+         if (cardElement) {
+           cardElement.classList.add('deleting');
+           setTimeout(() => cardElement.remove(), 300);
+         }
+         
+         // - Обновить счётчики
+         updateCounters();
+         
+         // Если это страница избранного - перерендерим сетку
+         if (window.currentView === 'favorites') {
+           const favorites = (window.projectsData || []).filter(p => p.isFavorite || p.is_favorite);
+           renderProjectsGrid(favorites);
+         }
+         
+         // 4. Если список стал пустым — показать страницу "Создать новый логотип"
+         if (window.projectsData && window.projectsData.length === 0 && window.currentView === 'dashboard') {
+           const grid = document.getElementById('proj-grid');
+           if (grid) {
+             grid.innerHTML = `
+               <div class="empty" style="grid-column:1/-1">
+                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                 <h3>Нет проектов</h3>
+                 <p>Создайте свой первый логотип</p>
+               </div>
+             `;
+           }
+         }
+         
+         if (window.currentView === 'favorites') {
+           const grid = document.getElementById('proj-grid');
+           if (grid) {
+             const favorites = (window.projectsData || []).filter(p => p.isFavorite || p.is_favorite);
+             if (favorites.length === 0) {
+               grid.innerHTML = `
+                 <div class="empty" style="grid-column:1/-1">
+                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                   <h3>Нет избранных</h3>
+                   <p>Добавьте логотипы в избранное</p>
+                 </div>
+               `;
+             }
+           }
+         }
+         
+         // Закрыть модальное окно
+         closeDeleteModal();
+         toast(`Логотип "${projectName}" удалён`);
          console.log('Project deleted successfully');
+         
        } catch (error) {
          console.error('Delete error:', error);
          toast('Ошибка при удалении: ' + error.message);
@@ -2271,13 +2340,68 @@ function confirmDelete(projectId, projectName) {
        // Возвращаем кнопку в исходное состояние
        newBtn.disabled = false;
        newBtn.textContent = 'Удалить';
-    });
-    
-    console.log('New event listener added to confirm button');
-  } else {
-    console.error('Confirm button not found!');
-  }
-}
+     });
+     
+     console.log('New event listener added to confirm button');
+   } else {
+     console.error('Confirm button not found!');
+   }
+ }
+
+// Функция удаления проекта - отправляет запрос на сервер
+async function deleteProject(projectId) {
+   console.log('deleteProject called with projectId:', projectId);
+   
+   try {
+     const user = getStoredUser();
+     if (!user) {
+       console.error('No user found in localStorage');
+       throw new Error('No user found');
+     }
+
+     const token = getToken();
+     if (!token) {
+       console.error('No token found in localStorage');
+       throw new Error('No token found');
+     }
+     
+     const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}`, {
+       method: 'DELETE',
+       headers: {
+         'Authorization': `Bearer ${token}`,
+         'Content-Type': 'application/json'
+       }
+     });
+
+     console.log('DELETE response status:', response.status, response.statusText);
+
+     if (!response.ok) {
+       const errorText = await response.text();
+       console.error('DELETE error response:', errorText);
+       
+       if (response.status === 401) {
+         logout();
+         toast('Сессия истекла. Войдите снова');
+         throw new Error('Token expired');
+       } else if (response.status === 403) {
+         toast('Ошибка доступа: у вас нет прав на удаление этого проекта');
+         throw new Error('Forbidden: User does not own this project');
+       } else if (response.status === 404) {
+         toast('Проект не найден');
+         throw new Error('Project not found');
+       } else {
+         throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
+       }
+     }
+
+     console.log('Project deleted successfully on server');
+     return { success: true };
+     
+   } catch (error) {
+     console.error('Delete project error:', error);
+     throw error;
+   }
+ }
 
 // Универсальная функция для проверки и обработки пустого состояния сетки
 // Работает одинаково на всех страницах (Мои проекты, Избранное и др.)
@@ -2350,150 +2474,7 @@ function checkAllGridsForEmptyState() {
   }
 }
 
-async function deleteProject(projectId) {
-      console.log('deleteProject called with projectId:', projectId);
-      console.log('Searching for card with data-project-id:', projectId);
-      
-      try {
-       // Step 1: Delete from backend - ЖДЁМ успешного ответа от сервера
-       console.log('Step 1: Calling API to delete project:', projectId);
-       const response = await api.deleteProject(projectId);
-       console.log('Step 1: API response:', response);
-       
-       if (!response.success) {
-         throw new Error('Failed to delete project');
-       }
-       
-       console.log('Step 1: Project successfully deleted from backend');
-       
-       // Step 2: Remove from local window.projectsData immediately
-       if (window.projectsData) {
-         const initialLength = window.projectsData.length;
-         window.projectsData = window.projectsData.filter(p => p.id !== projectId);
-         console.log('Step 2: Removed from window.projectsData. Before:', initialLength, 'After:', window.projectsData.length);
-       }
-       
-       // Step 3: Remove card from DOM directly using data attribute
-       // Это работает на ЛЮБОЙ странице, где отображается карточка
-       const cardElement = document.querySelector(`[data-project-id="${projectId}"]`);
-       console.log('Step 3: Looking for card with data-project-id:', projectId, cardElement);
-       
-       if (cardElement) {
-         console.log('Step 3: Found card element, removing...');
-         
-         // Мгновенно добавляем анимацию исчезновения
-         cardElement.classList.add('deleting');
-         console.log('Step 3: Added deleting class to card');
-         
-         // После завершения анимации (300ms) удаляем карточку
-         // Остальные карточки автоматически сдвинутся благодаря CSS Grid
-         setTimeout(() => {
-           if (cardElement && cardElement.parentNode) {
-             cardElement.remove();
-             console.log('Step 3: Card removed from DOM');
-           } else {
-             console.warn('Step 3: Card element was already removed or has no parent');
-           }
-           
-           // Проверяем, остались ли карточки, и показываем пустое состояние
-           checkAllGridsForEmptyState();
-         }, 300);
-       } else {
-         console.warn('Step 3: Card element not found for project:', projectId);
-       }
-       
-       // Step 4: Close modal immediately
-       closeDeleteModal();
-       console.log('Step 4: Modal closed');
-       
-       // Step 5: Show success message
-       toast('Логотип удалён');
-       console.log('Step 5: Success toast shown');
-       
-       // Step 6: Update counters
-       updateCounters();
-       console.log('Step 6: Counters updated');
-       
-     } catch (error) {
-       console.error('Delete project error:', error);
-       toast(error.message || 'Ошибка при удалении логотипа');
-       closeDeleteModal();
-       throw error;
-     }
-   }
-       
-       // Step 3: Remove card from DOM directly using data attribute
-       // Это работает на ЛЮБОЙ странице, где отображается карточка
-       const cardElement = document.querySelector(`[data-project-id="${projectId}"]`);
-       console.log('Step 3: Looking for card with data-project-id:', projectId, cardElement);
-       
-       if (cardElement) {
-         console.log('Step 3: Found card element, removing...');
-         
-         // Мгновенно добавляем анимацию исчезновения
-         cardElement.classList.add('deleting');
-         console.log('Step 3: Added deleting class to card');
-         
-         // После завершения анимации (300ms) удаляем карточку
-         // Остальные карточки автоматически сдвинутся благодаря CSS Grid
-         setTimeout(() => {
-           if (cardElement && cardElement.parentNode) {
-             cardElement.remove();
-             console.log('Step 3: Card removed from DOM');
-           } else {
-             console.warn('Step 3: Card element was already removed or has no parent');
-           }
-           
-           // Проверяем, остались ли карточки, и показываем пустое состояние
-           checkAllGridsForEmptyState();
-         }, 300);
-       } else {
-         console.warn('Step 3: Card element not found for project:', projectId);
-       }
-       
-       // Step 4: Close modal immediately
-       closeDeleteModal();
-       console.log('Step 4: Modal closed');
-       
-       // Step 5: Show success message
-       toast('Логотип удалён');
-       console.log('Step 5: Success toast shown');
-       
-       // Step 6: Update counters
-       updateCounters();
-       console.log('Step 6: Counters updated');
-       
-       // Шаг 7: Перечитываем список с сервера для синхронизации
-       try {
-         console.log('Step 7: Re-loading projects from server');
-         const currentView = document.querySelector('.view.active');
-         if (currentView) {
-           const viewId = currentView.id;
-           console.log('Current view:', viewId);
-           
-           if (viewId === 'v-dashboard') {
-             await renderProjects();
-           } else if (viewId === 'v-favorites') {
-             await renderFavorites();
-           }
-         }
-         console.log('Step 7: Projects re-loaded from server');
-       } catch (reloadError) {
-         console.error('Error reloading projects:', reloadError);
-       }
-       
-       console.log('deleteProject completed successfully');
-       
-     } catch (error) {
-       console.error('Delete project error:', error);
-       console.error('Error stack:', error.stack);
-       toast('Ошибка при удалении: ' + error.message);
-       closeDeleteModal();
-       
-       // Перебрасываем ошибку для обработки в confirmDelete
-       throw error;
-     }
-  }
+
 
 /* TOAST */
 let tTimer;
