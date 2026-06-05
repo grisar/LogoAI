@@ -1058,21 +1058,7 @@ function closeModal() {
   if (typeof window.projectToDelete !== 'undefined') {
     window.projectToDelete = null;
   }
-}
-
-/**
- * Delete project
- */
-async function deleteProject(projectId) {
-  console.log('deleteProject called from frontend-api.js with projectId:', projectId);
-  
-  try {
-    const user = getStoredUser();
-    if (!user) {
-      console.error('No user found in localStorage');
-      toast('Требуется авторизация');
-      throw new Error('No user found');
-    }
+  }
 
     const token = getToken();
     if (!token) {

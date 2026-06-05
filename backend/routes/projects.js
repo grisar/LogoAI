@@ -302,12 +302,13 @@ router.delete('/:id', authenticateToken, async (req, res) => {
       userEmail: req.user.email
     });
 
-    const result = await query(
-      'DELETE FROM projects WHERE id = $1 AND user_id = $2 RETURNING id',
+    // Проверяем что проект принадлежит пользователю
+    const projectCheck = await query(
+      'SELECT id, status, is_favorite FROM projects WHERE id = $1 AND user_id = $2',
       [id, userId]
     );
 
-    if (result.rows.length === 0) {
+    if (projectCheck.rows.length === 0) {
       console.log('Delete failed: Project not found or user does not own it', {
         projectId: id,
         userId: userId
@@ -315,12 +316,33 @@ router.delete('/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Project not found' });
     }
 
+    const project = projectCheck.rows[0];
+    console.log('Project found for deletion:', {
+      id: project.id,
+      status: project.status,
+      is_favorite: project.is_favorite
+    });
+
+    // CASCADE автоматически удалит:
+    // - Все logos (logos.project_id -> projects.id ON DELETE CASCADE)
+    // - Все generations (generations.project_id -> projects.id ON DELETE CASCADE)
+    // - Все user_sessions (если есть ссылки)
+
+    const result = await query(
+      'DELETE FROM projects WHERE id = $1 AND user_id = $2 RETURNING id',
+      [id, userId]
+    );
+
     console.log('Project deleted successfully:', {
       projectId: id,
       deletedId: result.rows[0].id
     });
 
-    res.json({ success: true, id: result.rows[0].id });
+    res.json({ 
+      success: true, 
+      id: result.rows[0].id,
+      message: 'Project deleted successfully'
+    });
   } catch (error) {
     console.error('Delete project error:', error);
     res.status(500).json({ error: 'Failed to delete project' });

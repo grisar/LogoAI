@@ -2181,9 +2181,24 @@ function closeDeleteModal(){
   console.log('projectToDelete reset to null');
 }
 
-// Обработчики для закрытия по клику на overlay (затемнённый фон)
+// Закрытие модального окна по клику на overlay
+document.addEventListener('click', function(e) {
+  const modalDeleteProject = document.getElementById('modal-delete');
+  if (modalDeleteProject && e.target === modalDeleteProject) {
+    closeDeleteModal();
+  }
+});
+
+// Закрытие по Escape
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeModal();
+    closeDeleteModal();
+  }
+});
+
 document.addEventListener('DOMContentLoaded', function() {
-  // Для модалки удаления аккаунта
+  // Для модалки удаления аккаунта (старый код оставлен для совместимости)
   const modalDeleteAccount = document.getElementById('modal');
   if (modalDeleteAccount) {
     modalDeleteAccount.addEventListener('click', function(e) {
@@ -2192,24 +2207,6 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
-  
-  // Для модалки удаления логотипа
-  const modalDeleteProject = document.getElementById('modal-delete');
-  if (modalDeleteProject) {
-    modalDeleteProject.addEventListener('click', function(e) {
-      if (e.target.id === 'modal-delete') {
-        closeDeleteModal();
-      }
-    });
-  }
-  
-  // Закрытие по Escape
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-      closeModal();
-      closeDeleteModal();
-    }
-  });
 });
 
 /* DELETE PROJECT */
@@ -2353,7 +2350,7 @@ function checkAllGridsForEmptyState() {
   }
 }
 
-  async function deleteProject(projectId) {
+async function deleteProject(projectId) {
       console.log('deleteProject called with projectId:', projectId);
       console.log('Searching for card with data-project-id:', projectId);
       
@@ -2363,6 +2360,10 @@ function checkAllGridsForEmptyState() {
        const response = await api.deleteProject(projectId);
        console.log('Step 1: API response:', response);
        
+       if (!response.success) {
+         throw new Error('Failed to delete project');
+       }
+       
        console.log('Step 1: Project successfully deleted from backend');
        
        // Step 2: Remove from local window.projectsData immediately
@@ -2371,6 +2372,55 @@ function checkAllGridsForEmptyState() {
          window.projectsData = window.projectsData.filter(p => p.id !== projectId);
          console.log('Step 2: Removed from window.projectsData. Before:', initialLength, 'After:', window.projectsData.length);
        }
+       
+       // Step 3: Remove card from DOM directly using data attribute
+       // Это работает на ЛЮБОЙ странице, где отображается карточка
+       const cardElement = document.querySelector(`[data-project-id="${projectId}"]`);
+       console.log('Step 3: Looking for card with data-project-id:', projectId, cardElement);
+       
+       if (cardElement) {
+         console.log('Step 3: Found card element, removing...');
+         
+         // Мгновенно добавляем анимацию исчезновения
+         cardElement.classList.add('deleting');
+         console.log('Step 3: Added deleting class to card');
+         
+         // После завершения анимации (300ms) удаляем карточку
+         // Остальные карточки автоматически сдвинутся благодаря CSS Grid
+         setTimeout(() => {
+           if (cardElement && cardElement.parentNode) {
+             cardElement.remove();
+             console.log('Step 3: Card removed from DOM');
+           } else {
+             console.warn('Step 3: Card element was already removed or has no parent');
+           }
+           
+           // Проверяем, остались ли карточки, и показываем пустое состояние
+           checkAllGridsForEmptyState();
+         }, 300);
+       } else {
+         console.warn('Step 3: Card element not found for project:', projectId);
+       }
+       
+       // Step 4: Close modal immediately
+       closeDeleteModal();
+       console.log('Step 4: Modal closed');
+       
+       // Step 5: Show success message
+       toast('Логотип удалён');
+       console.log('Step 5: Success toast shown');
+       
+       // Step 6: Update counters
+       updateCounters();
+       console.log('Step 6: Counters updated');
+       
+     } catch (error) {
+       console.error('Delete project error:', error);
+       toast(error.message || 'Ошибка при удалении логотипа');
+       closeDeleteModal();
+       throw error;
+     }
+   }
        
        // Step 3: Remove card from DOM directly using data attribute
        // Это работает на ЛЮБОЙ странице, где отображается карточка
