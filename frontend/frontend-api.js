@@ -1132,6 +1132,8 @@ document.addEventListener('DOMContentLoaded', initApp);
 
 // Export functions for global use
 window.api = {
+  login,
+  logout,
   getProjects,
   getProject,
   createProject,
