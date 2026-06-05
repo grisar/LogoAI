@@ -1367,11 +1367,11 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
           </div>
           <button class="btn btn-lime" onclick="show('tariffs')">Сменить тариф →</button>
         </div>
-        <div class="sub-stats">
-          <div class="sub-stat"><div class="v">2/3</div><div class="l">Генераций использовано</div></div>
-          <div class="sub-stat"><div class="v">3</div><div class="l">Сохранённых проектов</div></div>
-          <div class="sub-stat"><div class="v">12</div><div class="l">Дней до сброса лимита</div></div>
-        </div>
+         <div class="sub-stats">
+           <div class="sub-stat"><div class="v" id="sub-generations-used">0/3</div><div class="l">Генераций использовано</div></div>
+           <div class="sub-stat"><div class="v" id="sub-saved-projects">0</div><div class="l">Сохранённых проектов</div></div>
+           <div class="sub-stat"><div class="v">12</div><div class="l">Дней до сброса лимита</div></div>
+         </div>
       </div>
 
       <div class="set-section">
@@ -1471,12 +1471,12 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
 <!-- ═══ FAVORITES ═══ -->
 <div id="v-favorites" class="view">
   <div class="app-shell">
-    <aside class="sidebar">
-      <div class="sb-label">Меню</div>
-      <div class="nav-it" onclick="show('dashboard')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Мои проекты <span class="count">8</span></div>
-      <div class="nav-it" onclick="show('gen')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Новый логотип</div>
-      <div class="nav-it cur" onclick="show('favorites')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>Избранное <span class="count">3</span></div>
-      <div class="sb-label">Аккаунт</div>
+     <aside class="sidebar">
+       <div class="sb-label">Меню</div>
+       <div class="nav-it" onclick="show('dashboard')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Мои проекты <span class="count" id="sidebar-projects">0</span></div>
+       <div class="nav-it" onclick="show('gen')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Новый логотип</div>
+       <div class="nav-it cur" onclick="show('favorites')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>Избранное <span class="count" id="sidebar-favorites">0</span></div>
+       <div class="sb-label">Аккаунт</div>
       <div class="nav-it" onclick="show('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>Профиль</div>
       <div class="nav-it" onclick="show('subscription')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg>Подписка</div>
       <div class="nav-it" onclick="show('tariffs')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Тарифы</div>

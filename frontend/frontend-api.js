@@ -765,27 +765,39 @@ function updateCounters() {
      const totalProjects = window.projectsData ? window.projectsData.length : 0;
      const draftProjects = window.projectsData ? window.projectsData.filter(p => p.status === 'draft').length : 0;
      const doneProjects = window.projectsData ? window.projectsData.filter(p => p.status === 'done').length : 0;
-     const favoriteProjects = window.projectsData ? window.projectsData.filter(p => p.isFavorite).length : 0;
+     const favoriteProjects = window.projectsData ? window.projectsData.filter(p => p.isFavorite || p.is_favorite).length : 0;
 
-     document.querySelectorAll('[data-counter="total"]').forEach(el => {
-       el.textContent = `· ${totalProjects}`;
-     });
-
+     // Обновляем табы в dashboard (data-counter="drafts")
      document.querySelectorAll('[data-counter="drafts"]').forEach(el => {
        el.textContent = `· ${draftProjects}`;
      });
 
-     document.querySelectorAll('[data-counter="done"]').forEach(el => {
-       el.textContent = `· ${doneProjects}`;
-     });
-
+     // Обновляем счётчики в навигации (dashboard, subscription)
      document.querySelectorAll('#stats-projects, #dash-stats-projects, #sub-stats-projects').forEach(el => {
        el.textContent = totalProjects;
      });
 
+     // Обновляем счётчики избранных (dashboard, subscription, favorites page)
      document.querySelectorAll('#stats-favorites, #dash-stats-favorites, #sub-stats-favorites').forEach(el => {
        el.textContent = favoriteProjects;
      });
+
+     // Обновляем счётчики в sidebar
+     const sidebarProjectsEl = document.getElementById('sidebar-projects');
+     if (sidebarProjectsEl) {
+       sidebarProjectsEl.textContent = totalProjects;
+     }
+
+     const sidebarFavoritesEl = document.getElementById('sidebar-favorites');
+     if (sidebarFavoritesEl) {
+       sidebarFavoritesEl.textContent = favoriteProjects;
+     }
+
+     // Обновляем счётчики на странице подписки
+     const savedProjectsEl = document.getElementById('sub-saved-projects');
+     if (savedProjectsEl) {
+       savedProjectsEl.textContent = totalProjects;
+     }
 
      console.log('Counters updated:', { totalProjects, draftProjects, doneProjects, favoriteProjects });
    } catch (error) {
