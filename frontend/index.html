@@ -2669,9 +2669,18 @@ function handleLogout() {
   });
 }
 
-// Обновляем кнопки в форме авторизации
-document.getElementById('em')?.parentElement?.parentElement?.querySelector('.btn-violet')?.setAttribute('onclick', 'handleLogin()');
-document.getElementById('em')?.parentElement?.parentElement?.querySelector('.btn-secondary')?.setAttribute('onclick', 'handleRegister()');
+// Обновляем кнопки в форме авторизации после загрузки DOM
+document.addEventListener('DOMContentLoaded', function() {
+  const loginBtn = document.getElementById('em')?.parentElement?.parentElement?.querySelector('.btn-violet');
+  if (loginBtn) {
+    loginBtn.setAttribute('onclick', 'handleLogin()');
+  }
+  
+  const registerBtn = document.getElementById('em')?.parentElement?.parentElement?.querySelector('.btn-secondary');
+  if (registerBtn) {
+    registerBtn.setAttribute('onclick', 'handleRegister()');
+  }
+});
 
 // Initialize
 initApp();
