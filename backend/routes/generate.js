@@ -212,36 +212,53 @@ router.post('/async', authenticateToken, async (req, res) => {
       numVariants: params.numVariants || 4,
     });
 
-    // Если синхронная генерация, сохраняем результаты напрямую
-    if (predictionResult.status === 'succeeded' && predictionResult.output) {
-      const images = predictionResult.output;
+    // Cloudflare Workers AI возвращает синхронный результат
+    // Генерация уже завершена, сохраняем результаты
+    const logoInserts = predictionResult.images.map((img, index) =>
+      query(
+        `INSERT INTO logos (project_id, generation_id, variant_index, png_url, filename)
+         VALUES ($1, NULL, $2, $3, $4)
+         RETURNING id`,
+        [projectId, index + 1, img.url, img.filename]
+      )
+    );
 
-      const logoInserts = images.map((url, index) =>
-        query(
-          `INSERT INTO logos (project_id, generation_id, variant_index, png_url)
-           VALUES ($1, NULL, $2, $3)
-           RETURNING id`,
-          [projectId, index + 1, url]
-        )
-      );
+    const logos = await Promise.all(logoInserts);
 
-      const logos = await Promise.all(logoInserts);
+    await query(`UPDATE projects SET status = 'done' WHERE id = $1`, [projectId]);
 
-      await query(`UPDATE projects SET status = 'done' WHERE id = $1`, [projectId]);
+    // Сохраняем параметры проекта в БД
+    await query(
+      `UPDATE projects SET brand_name = $1, niche = $2, style = $3, color = $4 WHERE id = $5`,
+      [
+        params.brandName,
+        finalNiche,
+        params.style || 'minimalist',
+        params.colors?.[0] || '#C68DFF',
+        projectId
+      ]
+    );
 
-      res.json({
-        success: true,
-        generationId: null,
-        projectId,
-        predictionId: null,
-        status: 'completed',
-        logos: logos.map((l, i) => ({
-          id: l.rows[0].id,
-          variant: i + 1,
-          url: images[i],
-        })),
-      });
-      return;
+    // Возвращаем данные с перенаправлением на редактор
+    const firstLogoId = logos[0].rows[0].id;
+
+    res.json({
+      success: true,
+      generationId: null,
+      projectId,
+      predictionId: null,
+      status: 'completed',
+      logoId: firstLogoId,
+      logoUrl: logos[0].rows[0]?.png_url || predictionResult.images[0]?.url,
+      redirectTo: 'editor',
+      logos: logos.map((l, i) => ({
+        id: l.rows[0].id,
+        variant: i + 1,
+        url: predictionResult.images[i].url,
+        prompt: predictionResult.images[i].prompt,
+      })),
+    });
+    return;
     }
 
     // Создаём запись генерации для асинхронной генерации
