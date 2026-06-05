@@ -367,31 +367,7 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
 .ed-tool-group{display:flex;flex-direction:column;gap:var(--s3)}
 .ed-tool-label{font-size:var(--xs);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 
-/* ═══════════════ EXPORT ═══════════════ */
-.export-wrap{max-width:720px;margin:0 auto;padding:var(--s10) var(--s6)}
-.export-preview{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);display:flex;align-items:center;justify-content:center;padding:var(--s12);margin-bottom:var(--s8);box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
-.export-preview::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at center,var(--violet-25),transparent 70%);opacity:.5}
-.export-preview svg{position:relative;z-index:1}
-.export-formats{display:flex;flex-direction:column;gap:var(--s3);margin-bottom:var(--s8)}
-.fmt-row{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;transition:border-color var(--tr)}
-.fmt-row:has(input[type=radio]:checked){border-color:var(--violet)}
-.fmt-header{display:flex;align-items:center;gap:var(--s4);padding:var(--s4) var(--s5);cursor:pointer;transition:background var(--tr);user-select:none}
-.fmt-header:hover{background:var(--surface-2)}
-.fmt-header input[type=radio]{accent-color:var(--violet);width:18px;height:18px;flex-shrink:0;cursor:pointer}
-.fmt-icon{width:42px;height:42px;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;font-size:var(--xs);font-weight:700;flex-shrink:0;font-family:var(--font-d)}
-.fmt-info{flex:1}
-.fmt-name{font-size:var(--sm);font-weight:600;margin-bottom:2px}
-.fmt-desc{font-size:var(--xs);color:var(--muted)}
-.fmt-badge{flex-shrink:0}
-.fmt-body{padding:0 var(--s5) var(--s5);display:none;border-top:1px solid var(--divider)}
-.fmt-body.open{display:block;padding-top:var(--s4);animation:slideDown .3s ease}
-@keyframes slideDown{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
-.fmt-body-inner{display:flex;flex-direction:column;gap:var(--s3)}
-.fmt-opt-row{display:flex;align-items:center;justify-content:space-between;font-size:var(--sm);gap:var(--s3)}
-.fmt-opt-row span{color:var(--muted)}
-.select-inp{padding:var(--s2) var(--s3);background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);font-size:var(--xs);color:var(--text);cursor:pointer;min-width:180px}
-.locked-row{display:flex;align-items:center;gap:var(--s2);font-size:var(--xs);color:var(--ink)}
-.dl-btn-row{display:flex;gap:var(--s3);flex-wrap:wrap;justify-content:flex-end}
+
 
 /* ═══════════════ DASHBOARD / APP SHELL ═══════════════ */
 .app-shell{display:grid;grid-template-columns:260px 1fr;min-height:calc(100dvh - 70px)}
@@ -1073,90 +1049,6 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
   </div>
 </div>
 
-<!-- ═══ EXPORT ═══ -->
-<div id="v-export" class="view">
-  <div class="export-wrap">
-    <div class="pg-title">Экспорт логотипа</div>
-    <div class="export-preview">
-      <svg viewBox="0 0 200 200" fill="none" width="200" height="200">
-        <circle cx="100" cy="100" r="70" stroke="#C68DFF" stroke-width="5"/>
-        <text x="100" y="115" text-anchor="middle" font-size="56" font-family="Unbounded,serif" fill="#C68DFF" font-weight="700">Ax</text>
-      </svg>
-    </div>
-    <div class="export-formats">
-      <!-- PNG -->
-      <div class="fmt-row">
-        <label class="fmt-header" onclick="toggleFmt('png-body','r-png')">
-          <input type="radio" name="fmt" id="r-png" checked>
-          <div class="fmt-icon" style="background:rgba(91,168,74,.15);color:var(--success)">PNG</div>
-          <div class="fmt-info">
-            <div class="fmt-name">PNG — растровый</div>
-            <div class="fmt-desc">Универсально для веб, презентаций и соцсетей</div>
-          </div>
-          <div class="fmt-badge"><span class="badge badge-ok">Бесплатно</span></div>
-        </label>
-        <div class="fmt-body open" id="png-body">
-          <div class="fmt-body-inner">
-            <div class="fmt-opt-row"><span>Разрешение</span><select class="select-inp"><option>72 dpi — бесплатно</option><option>150 dpi — Базовый+</option><option>300 dpi — Базовый+</option></select></div>
-            <div class="fmt-opt-row"><span>Размер</span><select class="select-inp"><option>512 × 512 px</option><option>1024 × 1024 px</option><option>2048 × 2048 px — Базовый+</option></select></div>
-            <div class="fmt-opt-row"><span>Прозрачный фон</span><select class="select-inp"><option>Нет — бесплатно</option><option>Да — Базовый+</option></select></div>
-          </div>
-        </div>
-      </div>
-      <!-- JPG -->
-      <div class="fmt-row">
-        <label class="fmt-header" onclick="toggleFmt('jpg-body','r-jpg')">
-          <input type="radio" name="fmt" id="r-jpg">
-          <div class="fmt-icon" style="background:var(--violet-25);color:#7335bd">JPG</div>
-          <div class="fmt-info">
-            <div class="fmt-name">JPG — сжатый растр</div>
-            <div class="fmt-desc">Меньший размер файла, подходит для печати</div>
-          </div>
-          <div class="fmt-badge"><span class="badge badge-violet">Базовый+</span></div>
-        </label>
-        <div class="fmt-body" id="jpg-body">
-          <div class="fmt-body-inner">
-            <div class="fmt-opt-row"><span>Разрешение</span><select class="select-inp"><option>150 dpi</option><option>300 dpi</option></select></div>
-            <div class="fmt-opt-row"><span>Качество</span><select class="select-inp"><option>Высокое (90%)</option><option>Максимальное (100%)</option></select></div>
-          </div>
-        </div>
-      </div>
-      <!-- SVG -->
-      <div class="fmt-row">
-        <label class="fmt-header" onclick="toggleFmt('svg-body','r-svg')">
-          <input type="radio" name="fmt" id="r-svg">
-          <div class="fmt-icon" style="background:var(--ink);color:var(--lime)">SVG</div>
-          <div class="fmt-info">
-            <div class="fmt-name">SVG — векторный исходник</div>
-            <div class="fmt-desc">Масштабируется без потери качества</div>
-          </div>
-          <div class="fmt-badge"><span class="badge badge-pro">Про</span></div>
-        </label>
-        <div class="fmt-body" id="svg-body">
-          <div class="fmt-body-inner">
-            <div class="fmt-opt-row"><span>Прозрачный фон</span><select class="select-inp"><option>Да</option><option>Нет</option></select></div>
-            <div class="fmt-opt-row"><span>Контуры шрифтов</span><select class="select-inp"><option>Преобразовать в кривые</option><option>Сохранить текст</option></select></div>
-            <div style="padding:var(--s4);background:linear-gradient(135deg,var(--violet-25),var(--lime-25));border-radius:var(--r-md);display:flex;align-items:center;gap:var(--s3);justify-content:space-between;flex-wrap:wrap">
-              <div class="locked-row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Требуется тариф Про</div>
-              <button class="btn btn-violet btn-sm" onclick="show('tariffs')">Подключить</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="dl-btn-row">
-      <button class="btn btn-secondary" onclick="show('editor')">← В редактор</button>
-      <button class="btn btn-secondary" onclick="show('dashboard')">Сохранить и выйти</button>
-      <button class="btn btn-violet btn-lg" onclick="downloadFile()" id="export-download-btn">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        <span id="export-download-text">Скачать</span>
-      </button>
-      <div id="export-error-msg" style="display:none;color:var(--error);font-size:14px;margin-top:var(--s2);text-align:center"></div>
-    </div>
-  </div>
-</div>
-
-
 <!-- ═══ DASHBOARD ═══ -->
 <div id="v-dashboard" class="view">
   <div class="app-shell">
@@ -1620,12 +1512,8 @@ async function show(v){
       // Загружаем данные логотипа для редактора
       await loadEditorData();
     }
-    if(v==='export') {
-      // Загружаем данные для экспорта
-      await loadExportData();
-    }
     if(v==='profile' || v==='subscription') {
-     await updateSubscriptionUI();
+      await updateSubscriptionUI();
    }
  }
 function scrollToSec(id){
@@ -1817,158 +1705,6 @@ function edColor(c){
     if(node.getAttribute('stroke'))node.setAttribute('stroke',c);
     if(node.getAttribute('fill')&&node.getAttribute('fill')!=='none')node.setAttribute('fill',c);
   });
-}
-
-/* EXPORT — формат accordion */
-function toggleFmt(bodyId,radioId){
-  document.querySelectorAll('.fmt-body').forEach(b=>b.classList.remove('open'));
-  const body=document.getElementById(bodyId);
-  if(body)body.classList.add('open');
-  const r=document.getElementById(radioId);
-  if(r)r.checked=true;
-}
-
-/* DOWNLOAD imitation */
-async function downloadFile(){
-  if (!editorState.logoId) {
-    toast('Логотип не выбран');
-    return;
-  }
-  
-  // Check authentication
-  if (!window.api.getToken()) {
-    toast('Сначала войдите в аккаунт');
-    show('auth');
-    return;
-  }
-  
-  // Get UI elements
-  const btn = document.getElementById('export-download-btn');
-  const btnText = document.getElementById('export-download-text');
-  const errorMsg = document.getElementById('export-error-msg');
-  
-  // Check if already downloading
-  if (btn.disabled) {
-    return;
-  }
-  
-  const checked = document.querySelector('input[name="fmt"]:checked');
-  const fmt = checked ? (checked.id.split('-')[1] || 'png').toLowerCase() : 'png';
-  
-  // Check subscription for SVG (Pro only)
-  if (fmt === 'svg') {
-    if (currentSubscription && currentSubscription.planType !== 'pro') {
-      toast('SVG доступен только на тарифе Про');
-      show('tariffs');
-      return;
-    }
-  }
-  
-  try {
-    // Show loading state
-    btn.disabled = true;
-    btnText.textContent = 'Загрузка...';
-    errorMsg.style.display = 'none';
-    
-    // Get format options from UI
-    const formatBody = document.getElementById('png-body');
-    const jpgBody = document.getElementById('jpg-body');
-    const svgBody = document.getElementById('svg-body');
-    
-    let size = 1024;
-    let background = 'transparent';
-    
-    // Get options based on selected format
-    if (fmt === 'png' && formatBody) {
-      const sizeSelect = formatBody.querySelector('select:nth-of-type(2)');
-      const bgSelect = formatBody.querySelector('select:nth-of-type(3)');
-      
-      if (sizeSelect) {
-        const sizeText = sizeSelect.value;
-        if (sizeText.includes('512')) size = 512;
-        else if (sizeText.includes('1024')) size = 1024;
-        else if (sizeText.includes('2048')) size = 2048;
-      }
-      
-      if (bgSelect) {
-        background = bgSelect.value.includes('Да') ? 'transparent' : 'white';
-      }
-    } else if (fmt === 'jpg' && jpgBody) {
-      const sizeSelect = jpgBody.querySelector('select:nth-of-type(1)');
-      if (sizeSelect) {
-        const sizeText = sizeSelect.value;
-        if (sizeText.includes('150')) size = 1024;
-        else if (sizeText.includes('300')) size = 2048;
-      }
-      background = 'white';
-    } else if (fmt === 'svg' && svgBody) {
-      const bgSelect = svgBody.querySelector('select:nth-of-type(1)');
-      if (bgSelect) {
-        background = bgSelect.value === 'Да' ? 'transparent' : 'white';
-      }
-    }
-    
-    // Call export API
-    const response = await fetch(`${window.API_BASE_URL}/api/export`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${window.api.getToken()}`
-      },
-      body: JSON.stringify({
-        logoId: editorState.logoId,
-        format: fmt,
-        size: size,
-        background: background
-      })
-    });
-    
-    if (!response.ok) {
-      let errorMessage = 'Ошибка при скачивании файла';
-      try {
-        const errorData = await response.json();
-        errorMessage = errorData.error || errorMessage;
-      } catch (e) {
-        // If can't parse JSON, use status text
-        errorMessage = `Ошибка сервера: ${response.status}`;
-      }
-      throw new Error(errorMessage);
-    }
-    
-    // Get file blob
-    const blob = await response.blob();
-    
-    // Create download link
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `logo-${editorState.logoId}.${fmt}`;
-    document.body.appendChild(a);
-    a.click();
-    
-    // Cleanup
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
-    
-    toast(`${fmt.toUpperCase()}-файл скачан!`);
-    
-  } catch (error) {
-    console.error('Download error:', error);
-    toast('Ошибка при скачивании');
-    
-    // Show error message under button
-    errorMsg.textContent = error.message || 'Не удалось скачать файл';
-    errorMsg.style.display = 'block';
-    
-  } finally {
-    // Reset button state
-    btn.disabled = false;
-    btnText.textContent = 'Скачать';
-  }
-}
-    console.error('Download error:', error);
-    toast('Ошибка скачивания: ' + error.message);
-  }
 }
 
 /* SAVE DRAFT */
@@ -2795,34 +2531,6 @@ async function loadEditorData() {
   }
 }
 
-async function loadExportData() {
-  console.log('loadExportData called, editorState:', editorState);
-  
-  if (!editorState.logoId) {
-    toast('Сначала выберите логотип');
-    show('editor');
-    return;
-  }
-  
-  try {
-    // Update export preview with logo image
-    const preview = document.querySelector('.export-preview');
-    if (preview && editorState.image) {
-      preview.innerHTML = `
-        <img src="${editorState.image}" alt="Logo Preview" 
-             style="max-width:100%;max-height:100%;object-fit:contain;
-                    background:${editorState.background === 'dark' ? '#1a1a2e' : '#f4f4f6'}">
-      `;
-    }
-    
-    console.log('Export data loaded successfully');
-  } catch (error) {
-    console.error('Load export data error:', error);
-    toast('Ошибка при загрузке данных экспорта');
-    show('editor');
-  }
-}
-
 function renderEditor() {
   // Update main canvas
   const canvasArea = document.querySelector('.canvas-area');
@@ -2922,42 +2630,6 @@ async function saveDraft() {
   } catch (error) {
     console.error('Save draft error:', error);
     toast('Ошибка при сохранении черновика');
-  }
-}
-
-async function goToExport() {
-  if (!editorState.logoId) {
-    toast('Сначала выберите логотип');
-    return;
-  }
-  
-  await saveEditorChanges();
-  show('export');
-}
-
-async function goToExportFromCard(logoId) {
-  if (!logoId) {
-    toast('Логотип не найден');
-    return;
-  }
-  
-  // Load logo data into editorState
-  try {
-    const logoData = await window.api.getLogo(logoId);
-    
-    editorState.logoId = logoData.id;
-    editorState.projectId = logoData.projectId;
-    editorState.image = logoData.pngUrl;
-    editorState.brandName = logoData.brandName || '';
-    editorState.niche = logoData.niche || '';
-    editorState.style = logoData.style || '';
-    editorState.color = logoData.color || '#000000';
-    editorState.status = 'done';
-    
-    show('export');
-  } catch (error) {
-    console.error('Load logo for export error:', error);
-    toast('Ошибка при загрузке логотипа');
   }
 }
 

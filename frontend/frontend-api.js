@@ -945,40 +945,9 @@ async function openProject(projectId) {
   }
 }
 
-/**
- * Download project logos
- */
-async function downloadProject(projectId) {
-  try {
-    const project = await getProject(projectId);
-    
-    if (!project.logos || project.logos.length === 0) {
-      toast('Нет логотипов для скачивания');
-      return;
-    }
-
-    const logo = project.logos[0];
-    const link = document.createElement('a');
-    link.href = logo.url;
-    link.download = `${project.name}-logo-v${logo.variant}.png`;
-    link.target = '_blank';
-    
-    if (logo.url.startsWith('data:')) {
-      const response = await fetch(logo.url);
-      const blob = await response.blob();
-      link.href = URL.createObjectURL(blob);
-    }
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    toast('Файл скачивается…');
-  } catch (error) {
-    console.error('Download error:', error);
-    toast('Ошибка при скачивании');
-  }
-}
+// ═══════════════════════════════════════════════════════════════
+// REMOVE: downloadProject function
+// ═══════════════════════════════════════════════════════════════
 
 // Удалено: функции showDeleteModal, closeModal, deleteProject из frontend-api.js
 // Эти функции теперь реализованы в index.html для согласованности
@@ -1213,7 +1182,6 @@ window.updateStatsUI = updateStatsUI;
 window.updateSubscriptionUI = updateSubscriptionUI;
 window.updateUserUI = updateUserUI;
 window.updateCounters = updateCounters;
-window.downloadProject = downloadProject;
 window.isAuthenticated = isAuthenticated;
 window.openEditor = openEditor;
 window.getToken = getToken;
