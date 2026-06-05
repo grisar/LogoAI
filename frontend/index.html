@@ -367,7 +367,31 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
 .ed-tool-group{display:flex;flex-direction:column;gap:var(--s3)}
 .ed-tool-label{font-size:var(--xs);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 
-
+/* ═══════════════ EXPORT ═══════════════ */
+.export-wrap{max-width:720px;margin:0 auto;padding:var(--s10) var(--s6)}
+.export-preview{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);display:flex;align-items:center;justify-content:center;padding:var(--s12);margin-bottom:var(--s8);box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
+.export-preview::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at center,var(--violet-25),transparent 70%);opacity:.5}
+.export-preview svg{position:relative;z-index:1}
+.export-formats{display:flex;flex-direction:column;gap:var(--s3);margin-bottom:var(--s8)}
+.fmt-row{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;transition:border-color var(--tr)}
+.fmt-row:has(input[type=radio]:checked){border-color:var(--violet)}
+.fmt-header{display:flex;align-items:center;gap:var(--s4);padding:var(--s4) var(--s5);cursor:pointer;transition:background var(--tr);user-select:none}
+.fmt-header:hover{background:var(--surface-2)}
+.fmt-header input[type=radio]{accent-color:var(--violet);width:18px;height:18px;flex-shrink:0;cursor:pointer}
+.fmt-icon{width:42px;height:42px;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;font-size:var(--xs);font-weight:700;flex-shrink:0;font-family:var(--font-d)}
+.fmt-info{flex:1}
+.fmt-name{font-size:var(--sm);font-weight:600;margin-bottom:2px}
+.fmt-desc{font-size:var(--xs);color:var(--muted)}
+.fmt-badge{flex-shrink:0}
+.fmt-body{padding:0 var(--s5) var(--s5);display:none;border-top:1px solid var(--divider)}
+.fmt-body.open{display:block;padding-top:var(--s4);animation:slideDown .3s ease}
+@keyframes slideDown{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.fmt-body-inner{display:flex;flex-direction:column;gap:var(--s3)}
+.fmt-opt-row{display:flex;align-items:center;justify-content:space-between;font-size:var(--sm);gap:var(--s3)}
+.fmt-opt-row span{color:var(--muted)}
+.select-inp{padding:var(--s2) var(--s3);background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);font-size:var(--xs);color:var(--text);cursor:pointer;min-width:180px}
+.locked-row{display:flex;align-items:center;gap:var(--s2);font-size:var(--xs);color:var(--ink)}
+.dl-btn-row{display:flex;gap:var(--s3);flex-wrap:wrap;justify-content:flex-end}
 
 /* ═══════════════ DASHBOARD / APP SHELL ═══════════════ */
 .app-shell{display:grid;grid-template-columns:260px 1fr;min-height:calc(100dvh - 70px)}
@@ -887,6 +911,10 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
           <span class="chip" onclick="tog(this)">Спорт</span>
           <span class="chip" onclick="tog(this)">Другое</span>
         </div>
+        <!-- Текстовое поле для кастомной ниши (скрыто по умолчанию) -->
+        <div id="custom-niche-field" style="display:none;margin-top:var(--s3)">
+          <input type="text" id="custom-niche-input" placeholder="Введите вашу нишу" style="padding:var(--s3) var(--s4);background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);font-size:var(--sm);width:100%;font-family:var(--font-b);color:var(--text)">
+        </div>
       </div>
       <button class="btn btn-violet" onclick="gstep(2)">Далее →</button>
     </div>
@@ -993,14 +1021,17 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
   <div class="editor-shell">
     <div class="ed-main">
       <div class="pg-title">Редактор логотипа</div>
-      <div class="canvas-area" id="editor-canvas">
-        <!-- Logo image will be loaded here -->
+      <div class="canvas-area">
+        <svg viewBox="0 0 200 200" fill="none" width="220" height="220" id="ed-canvas">
+          <circle cx="100" cy="100" r="70" stroke="#C68DFF" stroke-width="5"/>
+          <text x="100" y="115" text-anchor="middle" font-size="56" font-family="Unbounded,serif" fill="#C68DFF" font-weight="700">Ax</text>
+        </svg>
       </div>
       <div class="ed-toolbar">
         <div class="ed-tool-group">
           <div class="ed-tool-label">Цвет элементов</div>
           <div class="swatches">
-            <div class="sw" style="background:#C68DFF" onclick="selSw(this);edColor('#C68DFF')"></div>
+            <div class="sw on" style="background:#C68DFF" onclick="selSw(this);edColor('#C68DFF')"></div>
             <div class="sw" style="background:#CBE857" onclick="selSw(this);edColor('#CBE857')"></div>
             <div class="sw" style="background:#323843" onclick="selSw(this);edColor('#323843')"></div>
             <div class="sw" style="background:#5BA84A" onclick="selSw(this);edColor('#5BA84A')"></div>
@@ -1010,44 +1041,130 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
         <div class="ed-tool-group">
           <div class="ed-tool-label">Шрифт</div>
           <div class="tag-row">
-            <span class="chip" onclick="togSingle(this);edFont('Unbounded')">Unbounded</span>
-            <span class="chip" onclick="togSingle(this);edFont('Inter')">Inter</span>
-            <span class="chip" onclick="togSingle(this);edFont('Mono')">Mono</span>
+            <span class="chip on" onclick="togSingle(this)">Unbounded</span>
+            <span class="chip" onclick="togSingle(this)">Inter</span>
+            <span class="chip" onclick="togSingle(this)">Mono</span>
           </div>
         </div>
         <div class="ed-tool-group">
           <div class="ed-tool-label">Фон превью</div>
           <div class="tag-row">
-            <span class="chip" onclick="togSingle(this);edBackground('light')">Светлый</span>
-            <span class="chip" onclick="togSingle(this);edBackground('dark')">Тёмный</span>
-            <span class="chip" onclick="togSingle(this);edBackground('transparent')">Прозрачный</span>
+            <span class="chip on" onclick="togSingle(this)">Светлый</span>
+            <span class="chip" onclick="togSingle(this)">Тёмный</span>
+            <span class="chip" onclick="togSingle(this)">Прозрачный</span>
           </div>
         </div>
       </div>
       <div class="btn-row">
-        <button class="btn btn-secondary" onclick="goToVariants()">← К вариантам</button>
-        <button class="btn btn-violet" onclick="goToExport()">Перейти к экспорту →</button>
+        <button class="btn btn-secondary" onclick="show('results')">← К вариантам</button>
+        <button class="btn btn-violet" onclick="show('export')">Перейти к экспорту →</button>
       </div>
     </div>
     <aside class="ed-panel">
       <div class="pan-title">Предпросмотр</div>
-      <div class="mini-prev" id="preview-light"></div>
-      <div class="mini-prev dark-bg" id="preview-dark"></div>
+      <div class="mini-prev"><svg viewBox="0 0 100 100" fill="none" width="100%"><circle cx="50" cy="50" r="34" stroke="#C68DFF" stroke-width="3"/><text x="50" y="58" text-anchor="middle" font-size="26" font-family="Unbounded,serif" fill="#C68DFF" font-weight="700">Ax</text></svg></div>
+      <div class="mini-prev dark-bg"><svg viewBox="0 0 100 100" fill="none" width="100%"><circle cx="50" cy="50" r="34" stroke="#CBE857" stroke-width="3"/><text x="50" y="58" text-anchor="middle" font-size="26" font-family="Unbounded,serif" fill="#CBE857" font-weight="700">Ax</text></svg></div>
       <div class="pan-div"></div>
       <div>
         <div class="pan-title" style="margin-bottom:var(--s3)">Параметры</div>
-        <div id="editor-params" style="display:flex;flex-direction:column;gap:var(--s2);font-size:var(--sm)">
-          <!-- Parameters will be loaded here -->
+        <div style="display:flex;flex-direction:column;gap:var(--s2);font-size:var(--sm)">
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Бренд</span><span>Axion Studio</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Ниша</span><span>Дизайн</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Стиль</span><span>Минималистичный</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Цвет</span><span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:50%;background:#C68DFF;display:inline-block"></span>Фиолетовый</span></div>
         </div>
       </div>
       <div class="pan-div"></div>
-      <button class="btn btn-secondary btn-block" onclick="saveEditorDraft()">
+      <button class="btn btn-secondary btn-block" onclick="saveDraft()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
         Сохранить черновик
       </button>
     </aside>
   </div>
 </div>
+
+<!-- ═══ EXPORT ═══ -->
+<div id="v-export" class="view">
+  <div class="export-wrap">
+    <div class="pg-title">Экспорт логотипа</div>
+    <div class="export-preview">
+      <svg viewBox="0 0 200 200" fill="none" width="200" height="200">
+        <circle cx="100" cy="100" r="70" stroke="#C68DFF" stroke-width="5"/>
+        <text x="100" y="115" text-anchor="middle" font-size="56" font-family="Unbounded,serif" fill="#C68DFF" font-weight="700">Ax</text>
+      </svg>
+    </div>
+    <div class="export-formats">
+      <!-- PNG -->
+      <div class="fmt-row">
+        <label class="fmt-header" onclick="toggleFmt('png-body','r-png')">
+          <input type="radio" name="fmt" id="r-png" checked>
+          <div class="fmt-icon" style="background:rgba(91,168,74,.15);color:var(--success)">PNG</div>
+          <div class="fmt-info">
+            <div class="fmt-name">PNG — растровый</div>
+            <div class="fmt-desc">Универсально для веб, презентаций и соцсетей</div>
+          </div>
+          <div class="fmt-badge"><span class="badge badge-ok">Бесплатно</span></div>
+        </label>
+        <div class="fmt-body open" id="png-body">
+          <div class="fmt-body-inner">
+            <div class="fmt-opt-row"><span>Разрешение</span><select class="select-inp"><option>72 dpi — бесплатно</option><option>150 dpi — Базовый+</option><option>300 dpi — Базовый+</option></select></div>
+            <div class="fmt-opt-row"><span>Размер</span><select class="select-inp"><option>512 × 512 px</option><option>1024 × 1024 px</option><option>2048 × 2048 px — Базовый+</option></select></div>
+            <div class="fmt-opt-row"><span>Прозрачный фон</span><select class="select-inp"><option>Нет — бесплатно</option><option>Да — Базовый+</option></select></div>
+          </div>
+        </div>
+      </div>
+      <!-- JPG -->
+      <div class="fmt-row">
+        <label class="fmt-header" onclick="toggleFmt('jpg-body','r-jpg')">
+          <input type="radio" name="fmt" id="r-jpg">
+          <div class="fmt-icon" style="background:var(--violet-25);color:#7335bd">JPG</div>
+          <div class="fmt-info">
+            <div class="fmt-name">JPG — сжатый растр</div>
+            <div class="fmt-desc">Меньший размер файла, подходит для печати</div>
+          </div>
+          <div class="fmt-badge"><span class="badge badge-violet">Базовый+</span></div>
+        </label>
+        <div class="fmt-body" id="jpg-body">
+          <div class="fmt-body-inner">
+            <div class="fmt-opt-row"><span>Разрешение</span><select class="select-inp"><option>150 dpi</option><option>300 dpi</option></select></div>
+            <div class="fmt-opt-row"><span>Качество</span><select class="select-inp"><option>Высокое (90%)</option><option>Максимальное (100%)</option></select></div>
+          </div>
+        </div>
+      </div>
+      <!-- SVG -->
+      <div class="fmt-row">
+        <label class="fmt-header" onclick="toggleFmt('svg-body','r-svg')">
+          <input type="radio" name="fmt" id="r-svg">
+          <div class="fmt-icon" style="background:var(--ink);color:var(--lime)">SVG</div>
+          <div class="fmt-info">
+            <div class="fmt-name">SVG — векторный исходник</div>
+            <div class="fmt-desc">Масштабируется без потери качества</div>
+          </div>
+          <div class="fmt-badge"><span class="badge badge-pro">Про</span></div>
+        </label>
+        <div class="fmt-body" id="svg-body">
+          <div class="fmt-body-inner">
+            <div class="fmt-opt-row"><span>Прозрачный фон</span><select class="select-inp"><option>Да</option><option>Нет</option></select></div>
+            <div class="fmt-opt-row"><span>Контуры шрифтов</span><select class="select-inp"><option>Преобразовать в кривые</option><option>Сохранить текст</option></select></div>
+            <div style="padding:var(--s4);background:linear-gradient(135deg,var(--violet-25),var(--lime-25));border-radius:var(--r-md);display:flex;align-items:center;gap:var(--s3);justify-content:space-between;flex-wrap:wrap">
+              <div class="locked-row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Требуется тариф Про</div>
+              <button class="btn btn-violet btn-sm" onclick="show('tariffs')">Подключить</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dl-btn-row">
+      <button class="btn btn-secondary" onclick="show('editor')">← В редактор</button>
+      <button class="btn btn-secondary" onclick="show('dashboard')">Сохранить и выйти</button>
+      <button class="btn btn-violet btn-lg" onclick="downloadFile()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Скачать
+      </button>
+    </div>
+  </div>
+</div>
+
 
 <!-- ═══ DASHBOARD ═══ -->
 <div id="v-dashboard" class="view">
@@ -1356,9 +1473,9 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
   <div class="app-shell">
     <aside class="sidebar">
       <div class="sb-label">Меню</div>
-      <div class="nav-it" onclick="show('dashboard')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Мои проекты <span class="count" id="fav-stats-projects">0</span></div>
+      <div class="nav-it" onclick="show('dashboard')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Мои проекты <span class="count">8</span></div>
       <div class="nav-it" onclick="show('gen')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Новый логотип</div>
-      <div class="nav-it cur" onclick="show('favorites')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>Избранное <span class="count" id="fav-stats-favorites">0</span></div>
+      <div class="nav-it cur" onclick="show('favorites')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>Избранное <span class="count">3</span></div>
       <div class="sb-label">Аккаунт</div>
       <div class="nav-it" onclick="show('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>Профиль</div>
       <div class="nav-it" onclick="show('subscription')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg>Подписка</div>
@@ -1424,20 +1541,6 @@ let searchQuery = '';
 let currentUser = null;
 let currentSubscription = null;
 
-/* EDITOR STATE */
-let editorState = {
-  logoId: null,
-  projectId: null,
-  image: null,
-  brandName: '',
-  niche: '',
-  style: '',
-  color: '#C68DFF',
-  font: 'Unbounded',
-  background: 'light',
-  status: 'draft'
-};
-
 /* THEME */
 (function(){
   const btn=document.querySelector('[data-tt]'),r=document.documentElement;
@@ -1449,7 +1552,7 @@ let editorState = {
     // Сохраняем тему на сервере если авторизованы
     if (isAuthenticated()) {
       try {
-        await window.api.updateProfile({ theme: d });
+        await api.updateProfile({ theme: d });
       } catch (error) {
         console.error('Theme save error:', error);
       }
@@ -1479,43 +1582,21 @@ async function show(v){
   // обновляем sidebar
   document.querySelectorAll('[data-nav]').forEach(el=>{el.classList.toggle('cur',el.dataset.nav===v)});
 
-   // Загружаем данные для защищенных страниц
-     if(v==='dashboard') {
-      // Показываем skeleton загрузки если нет данных
-      const grid = document.getElementById('proj-grid');
-      if (grid && (!window.projectsData || window.projectsData.length === 0)) {
-        grid.innerHTML = `
-          <div class="loading-skeleton" style="grid-column:1/-1;padding:var(--s8);text-align:center;color:var(--muted)">
-            <div style="margin-bottom:var(--s4)">Загрузка проектов...</div>
-          </div>`;
-      }
-      // Загружаем проекты немедленно
-      await renderProjects();
-      await updateSubscriptionUI();
-      if (window.api && window.api.updateCounters) window.api.updateCounters();
-    }
-    if(v==='favorites') {
-      // Показываем skeleton загрузки если нет данных
-      const grid = document.getElementById('fav-grid');
-      if (grid && (!window.projectsData || window.projectsData.length === 0)) {
-        grid.innerHTML = `
-          <div class="loading-skeleton" style="grid-column:1/-1;padding:var(--s8);text-align:center;color:var(--muted)">
-            <div style="margin-bottom:var(--s4)">Загрузка избранного...</div>
-          </div>`;
-      }
-      // Загружаем избранное немедленно
-      await renderFavorites();
-      await updateSubscriptionUI();
-      if (window.api && window.api.updateCounters) window.api.updateCounters();
-    }
-    if(v==='editor') {
-      // Загружаем данные логотипа для редактора
-      await loadEditorData();
-    }
-    if(v==='profile' || v==='subscription') {
-      await updateSubscriptionUI();
+  // Загружаем данные для защищенных страниц
+   if(v==='dashboard') {
+     await loadDashboardProjects();
+     await updateSubscriptionUI();
+     if (window.api && window.api.updateCounters) window.api.updateCounters();
    }
- }
+   if(v==='favorites') {
+     await renderFavorites();
+     await updateSubscriptionUI();
+     if (window.api && window.api.updateCounters) window.api.updateCounters();
+   }
+   if(v==='profile' || v==='subscription') {
+    await updateSubscriptionUI();
+  }
+}
 function scrollToSec(id){
   show('landing');
   setTimeout(()=>{const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:'smooth',block:'start'})},120);
@@ -1523,6 +1604,23 @@ function scrollToSec(id){
 
 /* WIZARD */
 function gstep(n){
+  // Валидация перед переходом на шаг 2 (сфера/ниша)
+  if (n === 2) {
+    const nicheChips = document.querySelectorAll('#ws1 .chip');
+    const nicheEl = Array.from(nicheChips).find(chip => chip.classList.contains('on'));
+
+    if (nicheEl && nicheEl.textContent === 'Другое') {
+      const customNicheInput = document.getElementById('custom-niche-input');
+      const customNiche = customNicheInput?.value?.trim();
+
+      if (!customNiche) {
+        toast('Укажите вашу нишу');
+        customNicheInput.focus();
+        return; // Не даем перейти на следующий шаг
+      }
+    }
+  }
+
   document.querySelectorAll('.wstep').forEach(s=>s.classList.remove('active'));
   document.getElementById('ws'+n).classList.add('active');
   for(let i=1;i<=3;i++){
@@ -1551,34 +1649,73 @@ async function startGen(){
     document.getElementById('gen-state').style.display='';
     document.getElementById('res-state').style.display='none';
 
-    // Получаем параметры из wizard
-    const brandName = document.getElementById('bname')?.value || '';
+    // Получаем название бренда
+    const brandName = document.getElementById('bname')?.value?.trim() || '';
     if (!brandName) {
       toast('Введите название бренда');
       show('gen');
       return;
     }
 
-    // Получаем выбранные категории
-    const nicheEl = document.querySelector('.chip.on');
-    const styleEl = document.querySelectorAll('.chip.on')[1];
+    // Получаем сферу/нишу из первого шага
+    const nicheChips = document.querySelectorAll('#ws1 .chip');
+    const nicheEl = Array.from(nicheChips).find(chip => chip.classList.contains('on'));
 
+    let niche = 'design'; // Значение по умолчанию
+
+    if (nicheEl) {
+      const nicheText = nicheEl.textContent?.trim();
+
+      // Если выбрано "Другое" - берём значение из текстового поля
+      if (nicheText === 'Другое') {
+        const customNicheInput = document.getElementById('custom-niche-input');
+        const customNiche = customNicheInput?.value?.trim();
+
+        if (!customNiche) {
+          toast('Укажите вашу нишу');
+          show('gen');
+          return;
+        }
+
+        niche = customNiche;
+        console.log('Using custom niche:', niche);
+      } else {
+        // Иначе используем выбранный чип
+        niche = nicheText;
+        console.log('Using selected niche:', niche);
+      }
+    }
+
+    // Получаем стиль из второго шага (первый выбранный chip во втором .tag-row)
+    const styleChips = document.querySelectorAll('#ws2 .chip');
+    const styleEl = Array.from(styleChips).find(chip => chip.classList.contains('on'));
+    const style = styleEl?.textContent?.trim() || 'minimalist'; // Значение по умолчанию
+
+    // Получаем цвет из выбранного swatch
+    const colorSwatch = document.querySelector('.sw.on');
+    const primaryColor = colorSwatch?.style?.background || '#C68DFF'; // Значение по умолчанию (фиолетовый)
+
+    // Проверяем Pro функцию (текстовый промпт)
+    const textPrompt = document.querySelector('textarea[placeholder*="FLUX.1"]')?.value?.trim() || '';
+
+    // Формируем параметры для генерации
     const params = {
       brandName,
-      niche: nicheEl?.textContent?.trim() || 'design',
-      style: styleEl?.textContent?.trim() || 'minimalist',
-      colors: ['#C68DFF'],
+      niche,
+      style,
+      colors: [primaryColor],
       numVariants: 4
     };
 
-    // Проверяем Pro функцию (текстовый промпт)
-    const textPrompt = document.querySelector('textarea[placeholder*="FLUX.1"]')?.value?.trim();
+    // Добавляем текстовый промпт только если он есть
     if (textPrompt) {
       params.textPrompt = textPrompt;
     }
 
+    console.log('Generation params:', params);
+
     // Запускаем генерацию через API
-    const data = await window.api.startGeneration(params);
+    const data = await api.startGeneration(params);
     currentPredictionId = data.predictionId;
     currentProjectId = data.projectId;
 
@@ -1606,14 +1743,14 @@ async function pollGenerationStatus() {
       attempts++;
       progress = Math.min(progress + Math.random() * 5 + 2, 95);
 
-      const result = await window.api.pollGenerationStatus(currentPredictionId);
+      const result = await api.pollGenerationStatus(currentPredictionId);
 
       if (result.status === 'completed') {
         progress = 100;
         clearInterval(genTimer);
 
         // Получаем проект с результатами
-        const project = await window.api.getProject(currentProjectId);
+        const project = await api.getProject(currentProjectId);
 
         document.getElementById('gen-state').style.display='none';
         document.getElementById('res-state').style.display='';
@@ -1685,7 +1822,25 @@ function renderResults(logos) {
 }
 
 /* CHIP TOGGLES */
-function tog(el){el.classList.toggle('on')}
+function tog(el){
+  el.classList.toggle('on');
+
+  // Если чип "Другое" был выбран/снят - показываем/скрываем поле кастомной ниши
+  const parentRow = el.closest('.tag-row');
+  const otherChip = Array.from(parentRow.querySelectorAll('.chip')).find(chip => chip.textContent === 'Другое');
+  const customNicheField = document.getElementById('custom-niche-field');
+  const customNicheInput = document.getElementById('custom-niche-input');
+
+  if (otherChip && otherChip.classList.contains('on')) {
+    // Показываем поле кастомной ниши
+    customNicheField.style.display = 'block';
+    customNicheInput.focus();
+  } else {
+    // Скрываем поле и очищаем значение
+    customNicheField.style.display = 'none';
+    customNicheInput.value = '';
+  }
+}
 function togSingle(el){
   el.parentElement.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
   el.classList.add('on');
@@ -1693,8 +1848,12 @@ function togSingle(el){
 
 /* SWATCH SELECTION */
 function selSw(el){
+  // Убираем класс 'on' со всех swatches в этой группе
   el.closest('.swatches').querySelectorAll('.sw').forEach(s=>s.classList.remove('on'));
+  // Добавляем класс 'on' выбранному элементу
   el.classList.add('on');
+  // Логируем выбранный цвет для отладки
+  console.log('Selected color:', el.style.background);
 }
 
 /* EDITOR — смена цвета SVG */
@@ -1705,6 +1864,24 @@ function edColor(c){
     if(node.getAttribute('stroke'))node.setAttribute('stroke',c);
     if(node.getAttribute('fill')&&node.getAttribute('fill')!=='none')node.setAttribute('fill',c);
   });
+}
+
+/* EXPORT — формат accordion */
+function toggleFmt(bodyId,radioId){
+  document.querySelectorAll('.fmt-body').forEach(b=>b.classList.remove('open'));
+  const body=document.getElementById(bodyId);
+  if(body)body.classList.add('open');
+  const r=document.getElementById(radioId);
+  if(r)r.checked=true;
+}
+
+/* DOWNLOAD imitation */
+function downloadFile(){
+  const checked=document.querySelector('input[name="fmt"]:checked');
+  const fmt=checked?(checked.id.split('-')[1]||'png').toUpperCase():'PNG';
+  if(fmt==='SVG'){toast('SVG доступен только на тарифе Про');return}
+  toast(fmt+'-файл скачивается…');
+  setTimeout(()=>toast('Файл сохранён в Загрузки'),1800);
 }
 
 /* SAVE DRAFT */
@@ -1735,34 +1912,11 @@ async function saveDraft(){
       status: 'draft'
     };
 
-    await window.api.createProject(projectData);
+    await api.createProject(projectData);
     toast('Черновик сохранён в Мои проекты');
     setTimeout(()=>show('dashboard'),900);
   } catch (error) {
     console.error('Save draft error:', error);
-    toast('Ошибка при сохранении черновика');
-  }
-}
-
-async function saveEditorDraft(){
-  if (!isAuthenticated()) {
-    toast('Сначала войдите в аккаунт');
-    show('auth');
-    return;
-  }
-
-  if (!editorState.logoId) {
-    toast('Логотип не загружен');
-    return;
-  }
-
-  try {
-    await window.api.saveLogoDraft(editorState.logoId);
-    editorState.status = 'draft';
-    updateCounters();
-    toast('Черновик сохранён');
-  } catch (error) {
-    console.error('Save editor draft error:', error);
     toast('Ошибка при сохранении черновика');
   }
 }
@@ -1792,19 +1946,12 @@ async function renderProjects(){
    }
 
    try {
-     // Если есть кэшированные данные - показать их сразу
-     if (window.projectsData && window.projectsData.length > 0) {
-       console.log('Rendering cached projects:', window.projectsData.length);
-       renderProjectsGrid(window.projectsData);
-     }
-
-     // Загружаем свежие данные из API
      const filters = {
        status: currentTab === 'all' ? undefined : currentTab,
        search: searchQuery || undefined,
      };
 
-      const projects = await window.api.getProjects(filters);
+     const projects = await api.getProjects(filters);
      window.projectsData = projects;
 
      const grid = document.getElementById('proj-grid');
@@ -1822,62 +1969,53 @@ async function renderProjects(){
        return;
      }
 
-     // Рендерим новые данные
-     renderProjectsGrid(projects);
-   } catch (error) {
-     console.error('Render projects error:', error);
-     const grid = document.getElementById('proj-grid');
-     if (grid) {
-       grid.innerHTML = '<p>Ошибка при загрузке проектов</p>';
-     }
+      grid.innerHTML=projects.map((p,i)=>`
+       <div class="proj-card" data-project-id="${p.id}" style="animation-delay:${i*40}ms" onclick="openProject('${p.id}')">
+         <div class="proj-thumb" style="background:#F4F4F6">
+           <div class="proj-actions">
+             <button class="proj-fav ${p.isFavorite?'on':''}" onclick="event.stopPropagation();toggleFav('${p.id}')" aria-label="Избранное">
+               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+             </button>
+             <button class="proj-delete" onclick="event.stopPropagation();confirmDelete('${p.id}', '${p.name.replace(/'/g, "\\'")}')" aria-label="Удалить">
+               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                 <polyline points="3 6 5 6 21 6"/>
+                 <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                 <path d="M10 11v6"/>
+                 <path d="M14 11v6"/>
+                 <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+               </svg>
+             </button>
+           </div>
+           ${p.logos && p.logos.length > 0 ? `
+             <img src="${p.logos[0].url}" alt="${p.name}" style="width:70%;height:70%;object-fit:contain">
+           ` : `
+             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:70%;height:70%;opacity:0.3"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+           `}
+         </div>
+         <div class="proj-meta">
+           <div class="proj-name">${p.name}</div>
+           <div class="proj-date">${formatDate(p.updatedAt)}</div>
+           <div class="proj-acts">
+             <span class="badge ${p.status==='done'?'badge-ok':'badge-draft'}">${p.status==='done'?'Готов':'Черновик'}</span>
+             <button class="btn btn-sm btn-ghost">${p.status==='done'?'Скачать':'Открыть'}</button>
+           </div>
+         </div>
+       </div>
+     `).join('')+`
+    <button class="proj-new" onclick="show('gen')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      <span>Создать новый</span>
+    </button>`;
+  } catch (error) {
+    console.error('Render projects error:', error);
+    const grid = document.getElementById('proj-grid');
+    if (grid) {
+      grid.innerHTML = '<p>Ошибка при загрузке проектов</p>';
     }
-    
-    updateCounters();
-}
-
-// Вспомогательная функция для рендеринга сетки проектов
-function renderProjectsGrid(projects) {
-  const grid = document.getElementById('proj-grid');
-  if (!grid) return;
-
-  grid.innerHTML=projects.map((p,i)=>`
-    <div class="proj-card" data-project-id="${p.id}" style="animation-delay:${i*40}ms" onclick="openEditor('${p.logos[0]?.id || ''}')">
-      <div class="proj-thumb" style="background:#F4F4F6">
-        <div class="proj-actions">
-          <button class="proj-fav ${p.isFavorite?'on':''}" onclick="event.stopPropagation();toggleFav('${p.id}')" aria-label="Избранное">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-          </button>
-          <button class="proj-delete" onclick="event.stopPropagation();confirmDelete('${p.id}', '${p.name.replace(/'/g, "\\'")}')" aria-label="Удалить">
-           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-             <polyline points="3 6 5 6 21 6"/>
-             <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-             <path d="M10 11v6"/>
-             <path d="M14 11v6"/>
-             <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-           </svg>
-         </button>
-       </div>
-       ${p.logos && p.logos.length > 0 ? `
-         <img src="${p.logos[0].url}" alt="${p.name}" style="width:70%;height:70%;object-fit:contain" loading="lazy">
-       ` : `
-         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:70%;height:70%;opacity:0.3"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-       `}
-     </div>
-     <div class="proj-meta">
-       <div class="proj-name">${p.name}</div>
-       <div class="proj-date">${formatDate(p.updatedAt)}</div>
-       <div class="proj-acts">
-         <span class="badge ${p.status==='done'?'badge-ok':'badge-draft'}">${p.status==='done'?'Готов':'Черновик'}</span>
-              <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();goToExportFromCard('${p.logos[0]?.id || ''}')">${p.status==='done'?'Скачать':'Открыть'}</button>
-       </div>
-     </div>
-   </div>
- `).join('')+
- `<button class="proj-new" onclick="show('gen')">
-   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-   <span>Создать новый</span>
- </button>`;
-}
+   }
+   
+   updateCounters();
+ }
 
 /* РЕАЛИСТИЧНЫЕ ПЕРЕХОДЫ:
    – черновик открывается в редакторе
@@ -1890,7 +2028,7 @@ async function openProject(id){
   }
 
   try {
-    const project = await window.api.getProject(id);
+    const project = await api.getProject(id);
     if(!project)return;
 
     if(project.status==='draft'){
@@ -1909,43 +2047,48 @@ async function openProject(id){
 }
 
  async function toggleFav(id){
-     try {
-       // Step 1: Call backend API
-       const newState = await window.api.toggleFavorite(id);
-       
-       // Step 2: Update local window.projectsData immediately (global state)
-       if (window.projectsData) {
-         const project = window.projectsData.find(p => p.id === id);
-         if (project) {
-           project.isFavorite = newState;
-         }
-       }
-       
-       // Step 3: Update favorite button immediately (instant feedback)
-       const card = document.querySelector(`[data-project-id="${id}"]`);
-       if (card) {
-         const favBtn = card.querySelector('.proj-fav');
-         if (favBtn) {
-           if (newState) {
-             favBtn.classList.add('on');
-             favBtn.querySelector('svg')?.setAttribute('fill', 'currentColor');
-           } else {
-             favBtn.classList.remove('on');
-             favBtn.querySelector('svg')?.setAttribute('fill', 'none');
-           }
-         }
-       }
-       
-       // Step 4: Update counters dynamically from window.projectsData
-       updateCounters();
-       
-       // Step 5: Show success message
-       toast(newState?'Добавлено в избранное':'Убрано из избранного');
-     } catch (error) {
-       console.error('Toggle favorite error:', error);
-       toast('Ошибка при обновлении избранного');
-     }
-   }
+    try {
+      // Step 1: Call backend API
+      const newState = await api.toggleFavorite(id);
+      
+      // Step 2: Update local window.projectsData immediately
+      if (window.projectsData) {
+        const project = window.projectsData.find(p => p.id === id);
+        if (project) {
+          project.isFavorite = newState;
+        }
+      }
+      
+      // Step 3: Update favorite button immediately (instant feedback)
+      const card = document.querySelector(`[data-project-id="${id}"]`);
+      if (card) {
+        const favBtn = card.querySelector('.proj-fav');
+        if (favBtn) {
+          if (newState) {
+            favBtn.classList.add('on');
+            favBtn.querySelector('svg')?.setAttribute('fill', 'currentColor');
+          } else {
+            favBtn.classList.remove('on');
+            favBtn.querySelector('svg')?.setAttribute('fill', 'none');
+          }
+        }
+      }
+      
+      // Step 4: Update counters immediately
+      updateCounters();
+      
+      // Step 5: Refresh all lists (server-side)
+      await renderProjects();
+      await renderFavorites();
+      updateCounters();
+      
+      // Step 6: Show success message
+      toast(newState?'Добавлено в избранное':'Убрано из избранного');
+    } catch (error) {
+      console.error('Toggle favorite error:', error);
+      toast('Ошибка при обновлении избранного');
+    }
+  }
 
 /* FAVORITES */
 async function renderFavorites(){
@@ -1958,8 +2101,7 @@ async function renderFavorites(){
   }
 
   try {
-    // Загружаем проекты из API
-     const projects = await window.api.getProjects({ favorites: true });
+    const projects = await api.getProjects({ favorites: true });
     const grid = document.getElementById('fav-grid');
 
     if(!grid)return;
@@ -1975,14 +2117,14 @@ async function renderFavorites(){
       return;
     }
 
-      grid.innerHTML=projects.map((p,i)=>`
-        <div class="proj-card" data-project-id="${p.id}" style="animation-delay:${i*50}ms" onclick="openEditor('${p.logos[0]?.id || ''}')">
-          <div class="proj-thumb" style="background:#F4F4F6">
-            <div class="proj-actions">
-              <button class="proj-fav on" onclick="event.stopPropagation();toggleFav('${p.id}')" aria-label="Убрать из избранного">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-              </button>
-              <button class="proj-delete" onclick="event.stopPropagation();confirmDelete('${p.id}', '${p.name.replace(/'/g, "\\'")}')" aria-label="Удалить">
+    grid.innerHTML=projects.map((p,i)=>`
+       <div class="proj-card" data-project-id="${p.id}" style="animation-delay:${i*50}ms" onclick="openProject('${p.id}')">
+         <div class="proj-thumb" style="background:#F4F4F6">
+           <div class="proj-actions">
+             <button class="proj-fav on" onclick="event.stopPropagation();toggleFav('${p.id}')" aria-label="Убрать из избранного">
+               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+             </button>
+             <button class="proj-delete" onclick="event.stopPropagation();confirmDelete('${p.id}', '${p.name.replace(/'/g, "\\'")}')" aria-label="Удалить">
                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                  <polyline points="3 6 5 6 21 6"/>
                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
@@ -1993,7 +2135,7 @@ async function renderFavorites(){
              </button>
            </div>
            ${p.logos && p.logos.length > 0 ? `
-             <img src="${p.logos[0].url}" alt="${p.name}" style="width:70%;height:70%;object-fit:contain" loading="lazy">
+             <img src="${p.logos[0].url}" alt="${p.name}" style="width:70%;height:70%;object-fit:contain">
            ` : `
              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:70%;height:70%;opacity:0.3"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
            `}
@@ -2003,7 +2145,7 @@ async function renderFavorites(){
            <div class="proj-date">${formatDate(p.updatedAt)}</div>
            <div class="proj-acts">
              <span class="badge ${p.status==='done'?'badge-ok':'badge-draft'}">${p.status==='done'?'Готов':'Черновик'}</span>
-             <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();goToExportFromCard('${p.logos[0]?.id || ''}')">${p.status==='done'?'Скачать':'Открыть'}</button>
+             <button class="btn btn-sm btn-ghost">${p.status==='done'?'Скачать':'Открыть'}</button>
            </div>
          </div>
        </div>
@@ -2017,7 +2159,7 @@ async function renderFavorites(){
    }
    
    updateCounters();
-}
+ }
 
 /* MODAL - ИСПРАВЛЕННЫЕ ОБРАБОТЧИКИ */
 function openModal(){document.getElementById('modal').classList.add('on')}
@@ -2073,20 +2215,10 @@ document.addEventListener('DOMContentLoaded', function() {
 /* DELETE PROJECT */
 
 function confirmDelete(projectId, projectName) {
-    console.log('=== CONFIRM DELETE START ===');
-    console.log('confirmDelete called with projectId:', projectId);
-    console.log('confirmDelete called with projectName:', projectName);
-    
-    // Валидация ID проекта
-    if (!projectId || projectId === 'undefined' || projectId === undefined || projectId === null) {
-        console.error('Invalid projectId in confirmDelete:', projectId);
-        toast('Ошибка: неверный ID проекта');
-        return;
-    }
-    
-    // Сохраняем ID удаляемого проекта
-    projectToDelete = projectId;
-    console.log('projectToDelete set to:', projectToDelete);
+   console.log('confirmDelete called with projectId:', projectId, 'projectName:', projectName);
+   
+   // Сохраняем ID удаляемого проекта
+   projectToDelete = projectId;
    
    // Обновляем текст модалки
    const titleEl = document.getElementById('modal-delete-title');
@@ -2142,12 +2274,12 @@ function confirmDelete(projectId, projectName) {
        // Возвращаем кнопку в исходное состояние
        newBtn.disabled = false;
        newBtn.textContent = 'Удалить';
-   });
-   
-   console.log('New event listener added to confirm button');
- } else {
-   console.error('Confirm button not found!');
- }
+    });
+    
+    console.log('New event listener added to confirm button');
+  } else {
+    console.error('Confirm button not found!');
+  }
 }
 
 // Универсальная функция для проверки и обработки пустого состояния сетки
@@ -2222,69 +2354,96 @@ function checkAllGridsForEmptyState() {
 }
 
   async function deleteProject(projectId) {
-      console.log('=== DELETE PROJECT START ===');
       console.log('deleteProject called with projectId:', projectId);
-      console.log('window.projectsData:', window.projectsData);
-      
-      // Валидация ID проекта
-      if (!projectId || projectId === 'undefined' || projectId === undefined || projectId === null) {
-        console.error('Invalid projectId:', projectId);
-        toast('Ошибка: неверный ID проекта');
-        closeDeleteModal();
-        throw new Error('Invalid project ID: undefined');
-      }
+      console.log('Searching for card with data-project-id:', projectId);
       
       try {
-        // Step 0: Сохраняем статус логотипа ПЕРЕД удалением
-        const project = window.projectsData ? window.projectsData.find(p => p.id === projectId) : null;
-        const wasFavorite = project ? project.isFavorite : false;
-        const wasDraft = project ? project.status === 'draft' : false;
-        const wasCompleted = project ? project.status === 'done' : false;
-        console.log('Project status before delete:', { wasFavorite, wasDraft, wasCompleted });
-         
-        // Step 1: Delete from backend - ЖДЁМ успешного ответа от сервера
-        console.log('Step 1: Calling API deleteProject with:', projectId);
-        const response = await window.api.deleteProject(projectId);
-        console.log('Step 1: Project deleted from backend, response:', response);
-        
-       // Step 2: Remove from global window.projectsData immediately
+       // Step 1: Delete from backend - ЖДЁМ успешного ответа от сервера
+       console.log('Step 1: Calling API to delete project:', projectId);
+       const response = await api.deleteProject(projectId);
+       console.log('Step 1: API response:', response);
+       
+       console.log('Step 1: Project successfully deleted from backend');
+       
+       // Step 2: Remove from local window.projectsData immediately
        if (window.projectsData) {
          const initialLength = window.projectsData.length;
          window.projectsData = window.projectsData.filter(p => p.id !== projectId);
          console.log('Step 2: Removed from window.projectsData. Before:', initialLength, 'After:', window.projectsData.length);
        }
-        
-       // Step 3: Remove card from DOM with animation (instant on all pages)
+       
+       // Step 3: Remove card from DOM directly using data attribute
+       // Это работает на ЛЮБОЙ странице, где отображается карточка
        const cardElement = document.querySelector(`[data-project-id="${projectId}"]`);
+       console.log('Step 3: Looking for card with data-project-id:', projectId, cardElement);
+       
        if (cardElement) {
+         console.log('Step 3: Found card element, removing...');
+         
+         // Мгновенно добавляем анимацию исчезновения
          cardElement.classList.add('deleting');
+         console.log('Step 3: Added deleting class to card');
+         
+         // После завершения анимации (300ms) удаляем карточку
+         // Остальные карточки автоматически сдвинутся благодаря CSS Grid
          setTimeout(() => {
            if (cardElement && cardElement.parentNode) {
              cardElement.remove();
+             console.log('Step 3: Card removed from DOM');
+           } else {
+             console.warn('Step 3: Card element was already removed or has no parent');
            }
+           
+           // Проверяем, остались ли карточки, и показываем пустое состояние
            checkAllGridsForEmptyState();
          }, 300);
+       } else {
+         console.warn('Step 3: Card element not found for project:', projectId);
        }
-        
-       // Step 4: Close modal
+       
+       // Step 4: Close modal immediately
        closeDeleteModal();
-        
+       console.log('Step 4: Modal closed');
+       
        // Step 5: Show success message
        toast('Логотип удалён');
-        
-       // Step 6: Update counters dynamically from window.projectsData
+       console.log('Step 5: Success toast shown');
+       
+       // Step 6: Update counters
        updateCounters();
-       console.log('Step 6: Counters updated dynamically');
-         
+       console.log('Step 6: Counters updated');
+       
+       // Шаг 7: Перечитываем список с сервера для синхронизации
+       try {
+         console.log('Step 7: Re-loading projects from server');
+         const currentView = document.querySelector('.view.active');
+         if (currentView) {
+           const viewId = currentView.id;
+           console.log('Current view:', viewId);
+           
+           if (viewId === 'v-dashboard') {
+             await renderProjects();
+           } else if (viewId === 'v-favorites') {
+             await renderFavorites();
+           }
+         }
+         console.log('Step 7: Projects re-loaded from server');
+       } catch (reloadError) {
+         console.error('Error reloading projects:', reloadError);
+       }
+       
        console.log('deleteProject completed successfully');
-        
-      } catch (error) {
-        console.error('Delete project error:', error);
-        toast('Ошибка при удалении: ' + error.message);
-        closeDeleteModal();
-        throw error;
-      }
-   }
+       
+     } catch (error) {
+       console.error('Delete project error:', error);
+       console.error('Error stack:', error.stack);
+       toast('Ошибка при удалении: ' + error.message);
+       closeDeleteModal();
+       
+       // Перебрасываем ошибку для обработки в confirmDelete
+       throw error;
+     }
+  }
 
 /* TOAST */
 let tTimer;
@@ -2305,25 +2464,19 @@ async function initApp() {
   // Check authentication
   if (isAuthenticated()) {
     try {
-      // Load user data from localStorage first
-      const storedUser = window.api.getStoredUser();
-      if (storedUser) {
-        currentUser = storedUser;
-        // Update auth buttons
-        const authButtons = document.querySelectorAll('.btn-ghost[onclick*="auth"], .btn-violet[onclick*="auth"]');
-        authButtons.forEach((btn) => {
-          btn.textContent = storedUser.name || 'Профиль';
+      // Update user info
+      currentUser = await api.getCurrentUser();
+
+      // Update auth buttons
+      const authButtons = document.querySelectorAll('.btn-ghost[onclick*="auth"], .btn-violet[onclick*="auth"]');
+      authButtons.forEach((btn) => {
+        if (currentUser) {
+          btn.textContent = currentUser.name || 'Профиль';
           btn.onclick = () => show('dashboard');
-        });
+        }
+      });
 
-        // Update sidebar user info
-        updateUserUI();
-      }
-
-      // Refresh user data from server
-      currentUser = await window.api.getCurrentUser();
-
-      // Update UI again with fresh data
+      // Update sidebar user info
       updateUserUI();
 
     } catch (error) {
@@ -2353,7 +2506,7 @@ async function updateSubscriptionUI() {
   if (!isAuthenticated()) return;
 
   try {
-    currentSubscription = await window.api.getSubscription();
+    currentSubscription = await api.getSubscription();
     const { limits, stats } = currentSubscription;
 
     // Update plan widget
@@ -2460,7 +2613,7 @@ async function handleRegister() {
   }
 
   try {
-    const data = await window.api.register(email, password, name);
+    const data = await api.register(email, password, name);
     currentUser = data.user;
     toast('Аккаунт создан! Добро пожаловать, ' + data.user.name);
     updateUserUI();
@@ -2472,7 +2625,7 @@ async function handleRegister() {
 }
 
 function handleLogout() {
-  api.logout();
+  window.api.logout();
   currentUser = null;
   currentSubscription = null;
   updateUserUI();
@@ -2489,166 +2642,8 @@ function handleLogout() {
 document.getElementById('em')?.parentElement?.parentElement?.querySelector('.btn-violet')?.setAttribute('onclick', 'handleLogin()');
 document.getElementById('em')?.parentElement?.parentElement?.querySelector('.btn-secondary')?.setAttribute('onclick', 'handleRegister()');
 
-/* ════════════════════════════════════════
-   EDITOR FUNCTIONS
-   ════════════════════════════════════════ */
-
-async function loadEditorData() {
-  const logoId = new URLSearchParams(window.location.search).get('logo');
-
-  console.log('loadEditorData called with logoId:', logoId);
-
-  if (!logoId) {
-    toast('Логотип не найден');
-    show('dashboard');
-    return;
-  }
-
-  try {
-    console.log('Fetching logo data...');
-    const logo = await window.api.getLogo(logoId);
-    console.log('Logo data received:', logo);
-
-    editorState = {
-      logoId: logo.id,
-      projectId: logo.project_id || logo.brand_name,
-      image: logo.image_url,
-      brandName: logo.brand_name,
-      niche: logo.niche,
-      style: logo.style,
-      color: logo.color || '#C68DFF',
-      font: logo.font || 'Unbounded',
-      background: logo.background || 'light',
-      status: logo.status || 'draft'
-    };
-
-    console.log('Editor state set:', editorState);
-    renderEditor();
-  } catch (error) {
-    console.error('Load editor data error:', error);
-    toast('Ошибка при загрузке логотипа: ' + error.message);
-    show('dashboard');
-  }
-}
-
-function renderEditor() {
-  // Update main canvas
-  const canvasArea = document.querySelector('.canvas-area');
-  if (canvasArea) {
-    canvasArea.innerHTML = `
-      <img src="${editorState.image}" alt="Logo" style="width:100%;height:100%;object-fit:contain;background:${editorState.background === 'dark' ? '#1a1a2e' : editorState.background === 'transparent' ? 'transparent' : '#f4f4f6'}">
-    `;
-  }
-
-  // Update preview panels
-  const previews = document.querySelectorAll('.mini-prev');
-  previews.forEach(preview => {
-    preview.innerHTML = `
-      <img src="${editorState.image}" alt="Logo" style="width:100%;height:100%;object-fit:contain;background:${preview.classList.contains('dark-bg') ? '#1a1a2e' : '#f4f4f6'}">
-    `;
-  });
-
-  // Update parameters panel
-  const params = document.querySelector('.pan-title + div');
-  if (params) {
-    params.innerHTML = `
-      <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Бренд</span><span>${editorState.brandName}</span></div>
-      <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Ниша</span><span>${editorState.niche || '-'}</span></div>
-      <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Стиль</span><span>${editorState.style || '-'}</span></div>
-      <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Цвет</span><span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:50%;background:${editorState.color};display:inline-block"></span>${editorState.color}</span></div>
-    `;
-  }
-
-  // Update color swatches
-  const colorSwatches = document.querySelectorAll('.sw');
-  colorSwatches.forEach(swatch => {
-    const color = swatch.style.background;
-    if (color.includes(editorState.color) || editorState.color.includes(color)) {
-      swatch.classList.add('on');
-    } else {
-      swatch.classList.remove('on');
-    }
-  });
-
-  // Update font chips
-  const fontChips = document.querySelectorAll('.chip');
-  fontChips.forEach(chip => {
-    if (chip.textContent === editorState.font) {
-      chip.classList.add('on');
-    } else {
-      chip.classList.remove('on');
-    }
-  });
-
-  // Update background chips
-  const bgChips = document.querySelectorAll('.chip');
-  bgChips.forEach(chip => {
-    const text = chip.textContent.toLowerCase();
-    if ((text === 'светлый' && editorState.background === 'light') ||
-        (text === 'тёмный' && editorState.background === 'dark') ||
-        (text === 'прозрачный' && editorState.background === 'transparent')) {
-      chip.classList.add('on');
-    }
-  });
-}
-
-function edColor(color) {
-  editorState.color = color;
-  renderEditor();
-}
-
-function edFont(font) {
-  editorState.font = font;
-  renderEditor();
-}
-
-function edBackground(background) {
-  editorState.background = background;
-  renderEditor();
-}
-
-async function saveEditorChanges() {
-  try {
-    await window.api.updateLogo(editorState.logoId, {
-      color: editorState.color,
-      font: editorState.font,
-      background: editorState.background
-    });
-    toast('Изменения сохранены');
-  } catch (error) {
-    console.error('Save editor changes error:', error);
-    toast('Ошибка при сохранении');
-  }
-}
-
-async function saveDraft() {
-  try {
-    await window.api.saveLogoDraft(editorState.logoId);
-    editorState.status = 'draft';
-    updateCounters();
-    toast('Черновик сохранён');
-  } catch (error) {
-    console.error('Save draft error:', error);
-    toast('Ошибка при сохранении черновика');
-  }
-}
-
-function goToVariants() {
-  window.history.back();
-}
-
-// Export show function globally
-window.showView = show;
-
-// Initialize - wait for DOM to be ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', function() {
-    initApp();
-  });
-} else {
-  // DOM is already ready
-  initApp();
-}
+// Initialize
+initApp();
 
 
 

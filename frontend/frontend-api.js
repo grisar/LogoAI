@@ -115,24 +115,14 @@ async function authFetch(url, options = {}) {
     throw new Error('Not authenticated - no token found');
   }
 
-  // Create AbortController for timeout (180 seconds)
-  const controller = new AbortController();
-  const timeout = setTimeout(() => {
-    console.warn('authFetch timeout after 180 seconds for:', url);
-    controller.abort();
-  }, 180000); // 180 seconds timeout
-
   const response = await fetch(url, {
     ...options,
-    signal: controller.signal,
     headers: {
       ...options.headers,
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
   });
-
-  clearTimeout(timeout);
 
   console.log('authFetch response:', {
     status: response.status,
@@ -181,37 +171,6 @@ async function authFetch(url, options = {}) {
   }
 
   return response;
-}
-
-// ==================== EDITOR ====================
-
-/**
- * Open logo in editor
- */
-function openEditor(logoId) {
-  if (!logoId) {
-    console.error('openEditor: No logo ID provided');
-    toast('Ошибка: не указан ID логотипа');
-    return;
-  }
-
-  console.log('openEditor called with logoId:', logoId);
-
-  try {
-    // Show editor view without changing URL
-    const showFunction = window.showView || window.show;
-    if (typeof showFunction === 'function') {
-      console.log('Calling show editor function');
-      showFunction('editor');
-    } else {
-      console.error('show function not available');
-      toast('Ошибка при открытии редактора');
-      return;
-    }
-  } catch (error) {
-    console.error('openEditor error:', error);
-    toast('Ошибка при открытии редактора: ' + error.message);
-  }
 }
 
 // ==================== USER ====================
@@ -398,17 +357,52 @@ async function generateLogosSync(params) {
 /**
  * Start async generation
  */
+/**
+ * Start async generation
+ * @param {Object} params - Generation parameters
+ * @param {string} params.brandName - Brand name (required)
+ * @param {string} params.niche - Niche/category (default: 'design')
+ * @param {string} params.customNiche - Custom niche input (optional)
+ * @param {string} params.style - Logo style (default: 'minimalist')
+ * @param {string[]} params.colors - Color array (default: ['#C68DFF'])
+ * @param {string} params.textPrompt - Custom FLUX.1 prompt (optional, Pro feature)
+ * @param {string} params.projectId - Existing project ID (optional)
+ * @param {number} params.numVariants - Number of variants (1-4, default: 4)
+ */
 async function startGeneration(params) {
-  // Normalize colors to hex format
-  if (params.colors && Array.isArray(params.colors)) {
-    params.colors = params.colors.map(color => normalizeColor(color));
+  // Валидация обязательных параметров
+  if (!params.brandName || params.brandName.trim() === '') {
+    throw new Error('Название бренда обязательно');
   }
-  
-  console.log('startGeneration payload:', JSON.stringify(params, null, 2));
-  
+
+  // Определяем итоговую нишу: используем customNiche если есть, иначе niche
+  const finalNiche = params.customNiche?.trim() || params.niche?.trim() || 'design';
+
+  console.log('Final niche selected:', finalNiche, '(custom:', !!params.customNiche, ')');
+
+  // Значения по умолчанию
+  const validatedParams = {
+    brandName: params.brandName.trim(),
+    niche: finalNiche,         // Используем финальную нишу
+    style: params.style?.trim() || 'minimalist',
+    colors: Array.isArray(params.colors) && params.colors.length > 0 ? params.colors : ['#C68DFF'],
+    numVariants: Math.min(Math.max(params.numVariants || 4, 1), 4),
+  };
+
+  // Добавляем опциональные параметры
+  if (params.textPrompt && params.textPrompt.trim()) {
+    validatedParams.textPrompt = params.textPrompt.trim();
+  }
+
+  if (params.projectId) {
+    validatedParams.projectId = params.projectId;
+  }
+
+  console.log('Starting generation with params:', validatedParams);
+
   const response = await authFetch(`${API_BASE_URL}/api/generate/async`, {
     method: 'POST',
-    body: JSON.stringify(params),
+    body: JSON.stringify(validatedParams),
   });
 
   if (!response.ok) {
@@ -417,6 +411,7 @@ async function startGeneration(params) {
   }
 
   const data = await response.json();
+  console.log('Generation started:', data);
   return data;
 }
 
@@ -565,15 +560,6 @@ function getWizardParams() {
   // Get text prompt (Pro feature)
   const textPrompt = document.querySelector('textarea[placeholder*="FLUX.1"]')?.value?.trim();
 
-  console.log('getWizardParams collected:', {
-    brandName,
-    niche,
-    style,
-    colors,
-    textPrompt,
-    numVariants: 4
-  });
-
   return {
     brandName,
     niche,
@@ -588,56 +574,17 @@ function getWizardParams() {
  * Convert RGB to Hex
  */
 function rgbToHex(rgb) {
-  if (!rgb) return null;
-  
-  // Already hex
   if (rgb.startsWith('#')) return rgb;
-  
-  // Try to parse rgb(r, g, b)
-  const match = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
-  if (match) {
-    const hex = (x) => {
-      const hexValue = parseInt(x).toString(16);
-      return hexValue.length === 1 ? '0' + hexValue : hexValue;
-    };
-    return '#' + hex(match[1]) + hex(match[2]) + hex(match[3]);
-  }
-  
-  console.warn('Unknown color format:', rgb);
-  return rgb; // Return as-is if unknown format
-}
 
-/**
- * Ensure color is in hex format
- */
-function normalizeColor(color) {
-  if (!color) return '#C68DFF';
-  
-  // Already hex
-  if (color.startsWith('#')) return color;
-  
-  // Try to parse rgb(r, g, b)
-  const match = color.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
-  if (match) {
-    const hex = (x) => {
-      const hexValue = parseInt(x).toString(16);
-      return hexValue.length === 1 ? '0' + hexValue : hexValue;
-    };
-    return '#' + hex(match[1]) + hex(match[2]) + hex(match[3]);
-  }
-  
-  // Try to parse rgba(r, g, b, a)
-  const rgbaMatch = color.match(/^rgba\((\d+),\s*(\d+),\s*(\d+),\s*[\d.]+\)$/);
-  if (rgbaMatch) {
-    const hex = (x) => {
-      const hexValue = parseInt(x).toString(16);
-      return hexValue.length === 1 ? '0' + hexValue : hexValue;
-    };
-    return '#' + hex(rgbaMatch[1]) + hex(rgbaMatch[2]) + hex(rgbaMatch[3]);
-  }
-  
-  console.warn('Unknown color format:', color);
-  return color; // Return as-is if unknown format
+  const match = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+  if (!match) return rgb;
+
+  const hex = (x) => {
+    const hexValue = parseInt(x).toString(16);
+    return hexValue.length === 1 ? '0' + hexValue : hexValue;
+  };
+
+  return '#' + hex(match[1]) + hex(match[2]) + hex(match[3]);
 }
 
 /**
@@ -676,16 +623,11 @@ async function startLogoGeneration() {
       if (pct) pct.textContent = '100%';
       if (msg) msg.textContent = 'Готово!';
       
-      // Open editor with first logo
+      // Show results
       setTimeout(() => {
-        const firstLogoId = logos[0]?.id;
-        if (firstLogoId) {
-          console.log('Opening editor with logo:', firstLogoId);
-          window.openEditor(firstLogoId);
-        } else {
-          toast('Ошибка: логотип не найден');
-          show('gen');
-        }
+        document.getElementById('gen-state').style.display = 'none';
+        document.getElementById('res-state').style.display = '';
+        renderResults(logos);
       }, 500);
       return;
     }
@@ -697,15 +639,9 @@ async function startLogoGeneration() {
       console.log('Project data:', project);
       console.log('Rendering logos:', project.logos);
       
-      // Open editor with first logo
-      const firstLogoId = project.logos?.[0]?.id;
-      if (firstLogoId) {
-        console.log('Opening editor with logo:', firstLogoId);
-        window.openEditor(firstLogoId);
-      } else {
-        toast('Ошибка: логотип не найден');
-        show('gen');
-      }
+      document.getElementById('gen-state').style.display = 'none';
+      document.getElementById('res-state').style.display = '';
+      renderResults(project.logos);
       return;
     }
 
@@ -741,19 +677,17 @@ async function startLogoGeneration() {
           if (msg) msg.textContent = 'Готово!';
           clearInterval(pollInterval);
 
-          // Open editor with first logo
+          // Show results
           setTimeout(async () => {
             const project = await getProject(projectId);
+
+            document.getElementById('gen-state').style.display = 'none';
+            document.getElementById('res-state').style.display = '';
+
             console.log('Rendering logos:', project.logos);
 
-            const firstLogoId = project.logos?.[0]?.id;
-            if (firstLogoId) {
-              console.log('Opening editor with logo:', firstLogoId);
-              window.openEditor(firstLogoId);
-            } else {
-              toast('Ошибка: логотип не найден');
-              show('gen');
-            }
+            // Render results
+            renderResults(project.logos);
           }, 500);
         }
       } catch (error) {
@@ -824,44 +758,36 @@ function selectLogo(element) {
 // ==================== DASHBOARD INTEGRATION ====================
 
 /**
-  * Update counters across all UI elements
-  */
- function updateCounters() {
+ * Update counters across all UI elements
+ */
+function updateCounters() {
    try {
-     const projects = window.projectsData || [];
-
-     // Get all logos from projects
-     const allLogos = projects.flatMap(p => p.logos || []);
-
-     // Count logos by status
-     const draftLogos = allLogos.filter(l => l.status === 'draft').length;
-     const readyLogos = allLogos.filter(l => l.status === 'ready').length;
-
-     const totalProjects = projects.length;
-     const doneProjects = projects.filter(p => p.status === 'done').length;
-     const favoriteProjects = projects.filter(p => p.isFavorite).length;
+     const totalProjects = window.projectsData ? window.projectsData.length : 0;
+     const draftProjects = window.projectsData ? window.projectsData.filter(p => p.status === 'draft').length : 0;
+     const doneProjects = window.projectsData ? window.projectsData.filter(p => p.status === 'done').length : 0;
+     const favoriteProjects = window.projectsData ? window.projectsData.filter(p => p.isFavorite).length : 0;
 
      document.querySelectorAll('[data-counter="total"]').forEach(el => {
        el.textContent = `· ${totalProjects}`;
      });
 
      document.querySelectorAll('[data-counter="drafts"]').forEach(el => {
-       el.textContent = `· ${draftLogos}`;
+       el.textContent = `· ${draftProjects}`;
      });
 
      document.querySelectorAll('[data-counter="done"]').forEach(el => {
-       el.textContent = `· ${readyLogos}`;
+       el.textContent = `· ${doneProjects}`;
      });
 
-      document.querySelectorAll('#stats-projects, #dash-stats-projects, #sub-stats-projects, #fav-stats-projects').forEach(el => {
-        el.textContent = totalProjects;
-      });
+     document.querySelectorAll('#stats-projects, #dash-stats-projects, #sub-stats-projects').forEach(el => {
+       el.textContent = totalProjects;
+     });
 
-      document.querySelectorAll('#stats-favorites, #dash-stats-favorites, #sub-stats-favorites, #fav-stats-favorites').forEach(el => {
-        el.textContent = favoriteProjects;
-      });
+     document.querySelectorAll('#stats-favorites, #dash-stats-favorites, #sub-stats-favorites').forEach(el => {
+       el.textContent = favoriteProjects;
+     });
 
-     console.log('Counters updated:', { totalProjects, draftLogos, readyLogos, favoriteProjects });
+     console.log('Counters updated:', { totalProjects, draftProjects, doneProjects, favoriteProjects });
    } catch (error) {
      console.error('Update counters error:', error);
    }
@@ -871,16 +797,80 @@ function selectLogo(element) {
  * Load projects for dashboard
  */
 async function loadDashboardProjects() {
-   // Удалено: renderProjectsGrid теперь в index.html
-   // Функция загружает проекты и обновляет данные
-   try {
-     const projects = await getProjects();
-     window.projectsData = projects;
-     updateCounters();
-   } catch (error) {
-     console.error('Load projects error:', error);
-     toast('Ошибка при загрузке проектов');
-   }
+  try {
+    const projects = await getProjects();
+    window.projectsData = projects;
+    renderProjectsGrid(projects);
+    updateCounters();
+  } catch (error) {
+    console.error('Load projects error:', error);
+    toast('Ошибка при загрузке проектов');
+  }
+}
+
+/**
+ * Render projects grid
+ */
+function renderProjectsGrid(projects) {
+  const grid = document.getElementById('proj-grid');
+
+  if (!grid) {
+    console.log('renderProjectsGrid: grid element not found');
+    return;
+  }
+
+  if (!projects || projects.length === 0) {
+    grid.innerHTML = `
+      <div class="empty" style="grid-column:1/-1">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <h3>Нет проектов</h3>
+        <p>Создайте свой первый логотип</p>
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = projects
+    .map((project) => `
+    <div class="proj-card" data-project-id="${project.id}" onclick="openProject('${project.id}')" style="animation-delay:${Math.random() * 200}ms">
+      <div class="proj-thumb" style="background:#F4F4F6">
+        <div class="proj-actions">
+          <button class="proj-fav ${project.isFavorite || project.is_favorite ? 'on' : ''}" onclick="event.stopPropagation();handleFavorite('${project.id}', ${project.isFavorite || project.is_favorite})" aria-label="Избранное">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          </button>
+          <button class="proj-delete" onclick="event.stopPropagation();showDeleteModal('${project.id}', '${project.name.replace(/'/g, "\\'")}')" aria-label="Удалить">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+              <path d="M10 11v6"/>
+              <path d="M14 11v6"/>
+              <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+          </button>
+        </div>
+        ${project.logos && project.logos.length > 0 ? `
+          <img src="${project.logos[0].url}" alt="${project.name}" style="width:70%;height:70%;object-fit:contain">
+        ` : `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:70%;height:70%;opacity:0.3"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        `}
+      </div>
+      <div class="proj-meta">
+        <div class="proj-name">${project.name}</div>
+        <div class="proj-date">${formatDate(project.updatedAt)}</div>
+        <div class="proj-acts">
+          <span class="badge ${project.status === 'done' ? 'badge-ok' : 'badge-draft'}">${project.status === 'done' ? 'Готов' : 'Черновик'}</span>
+          ${project.status === 'done' ? `
+            <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();downloadProject('${project.id}')">Скачать</button>
+          ` : ''}
+        </div>
+      </div>
+    </div>
+  `).join('') + `
+    <button class="proj-new" onclick="show('gen')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      <span>Создать новый</span>
+    </button>
+  `;
 }
 
 /**
@@ -945,79 +935,225 @@ async function openProject(projectId) {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// REMOVE: downloadProject function
-// ═══════════════════════════════════════════════════════════════
-
-// Удалено: функции showDeleteModal, closeModal, deleteProject из frontend-api.js
-// Эти функции теперь реализованы в index.html для согласованности
-
-// ==================== LOGOS ====================
-
 /**
- * Get logo by ID
+ * Download project logos
  */
-async function getLogo(logoId) {
-  console.log('getLogo called with logoId:', logoId);
-  
-  const response = await authFetch(`${API_BASE_URL}/api/logos/${logoId}`);
+async function downloadProject(projectId) {
+  try {
+    const project = await getProject(projectId);
+    
+    if (!project.logos || project.logos.length === 0) {
+      toast('Нет логотипов для скачивания');
+      return;
+    }
 
-  if (!response.ok) {
-    console.error('getLogo failed with status:', response.status);
-    const errorText = await response.text();
-    console.error('Error text:', errorText);
-    throw new Error(`Failed to get logo: ${response.status} - ${errorText}`);
+    const logo = project.logos[0];
+    const link = document.createElement('a');
+    link.href = logo.url;
+    link.download = `${project.name}-logo-v${logo.variant}.png`;
+    link.target = '_blank';
+    
+    if (logo.url.startsWith('data:')) {
+      const response = await fetch(logo.url);
+      const blob = await response.blob();
+      link.href = URL.createObjectURL(blob);
+    }
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast('Файл скачивается…');
+  } catch (error) {
+    console.error('Download error:', error);
+    toast('Ошибка при скачивании');
   }
-
-  const data = await response.json();
-  console.log('getLogo response data:', JSON.stringify(data, null, 2));
-  
-  // Возвращаем логотип напрямую, проверяем структуру
-  if (data.logo) {
-    return data.logo;
-  }
-  
-  // Если логотип возвращается напрямую в объекте data
-  if (data.id) {
-    return data;
-  }
-  
-  // Если нет данных логотипа, выбрасываем ошибку
-  console.error('No logo data in response:', data);
-  throw new Error('Invalid logo data structure');
 }
 
 /**
- * Update logo editor settings
+ * Show delete confirmation modal
  */
-async function updateLogo(logoId, updates) {
-  const response = await authFetch(`${API_BASE_URL}/api/logos/${logoId}`, {
-    method: 'PATCH',
-    body: JSON.stringify(updates),
-  });
+function showDeleteModal(projectId, projectName) {
+  console.log('showDeleteModal called from frontend-api.js with projectId:', projectId, 'projectName:', projectName);
+  
+  const modal = document.getElementById('modal-delete');
+  const title = document.getElementById('modal-delete-title');
+  const text = document.getElementById('modal-delete-text');
+  const confirmBtn = document.getElementById('modal-delete-confirm');
+  const cancelBtn = modal.querySelector('.btn-secondary');
+  const closeBtn = modal.querySelector('.modal-close');
 
-  if (!response.ok) {
-    throw new Error('Failed to update logo');
+  console.log('Modal elements:', { modal: !!modal, title: !!title, text: !!text, confirmBtn: !!confirmBtn, cancelBtn: !!cancelBtn, closeBtn: !!closeBtn });
+
+  title.textContent = 'Удалить логотип?';
+  text.textContent = `Логотип "${projectName}" будет удалён без возможности восстановления.`;
+  
+  // Сохраняем ID в глобальной переменной для использования в обработчике
+  if (typeof window.projectToDelete !== 'undefined') {
+    window.projectToDelete = projectId;
   }
+  
+  // Удаляем все старые event listeners
+  const newConfirmBtn = confirmBtn.cloneNode(true);
+  confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+  
+  const newCancelBtn = cancelBtn.cloneNode(true);
+  cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+  
+  const newCloseBtn = closeBtn.cloneNode(true);
+  closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+  
+  // Добавляем обработчик для кнопки "Удалить"
+  newConfirmBtn.onclick = async function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    console.log('Delete confirm button clicked, deleting:', projectId);
+    
+    try {
+      // Вызываем deleteProject из API
+      await deleteProject(projectId);
+      
+      // Закрываем модалку
+      closeModal();
+      
+      toast(`Логотип "${projectName}" удалён`);
+    } catch (error) {
+      console.error('Delete project error:', error);
+      toast('Ошибка при удалении: ' + error.message);
+      
+      // Закрываем модалку при ошибке
+      closeModal();
+    }
+  };
+  
+  // Добавляем обработчик для кнопки "Отмена"
+  newCancelBtn.onclick = function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Cancel button clicked');
+    closeModal();
+  };
+  
+  // Добавляем обработчик для кнопки закрытия (×)
+  newCloseBtn.onclick = function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Close button clicked');
+    closeModal();
+  };
 
-  const data = await response.json();
-  return data;
+  modal.style.display = 'flex';
+  console.log('Modal opened');
+}
+
+function closeModal() {
+  const modal = document.getElementById('modal-delete');
+  if (modal) {
+    modal.style.display = 'none';
+    console.log('Modal closed');
+  }
+  
+  // Сбрасываем projectToDelete
+  if (typeof window.projectToDelete !== 'undefined') {
+    window.projectToDelete = null;
+  }
 }
 
 /**
- * Save logo as draft
+ * Delete project
  */
-async function saveLogoDraft(logoId) {
-  const response = await authFetch(`${API_BASE_URL}/api/logos/${logoId}/draft`, {
-    method: 'POST',
-  });
+async function deleteProject(projectId) {
+  console.log('deleteProject called from frontend-api.js with projectId:', projectId);
+  
+  try {
+    const user = getStoredUser();
+    if (!user) {
+      console.error('No user found in localStorage');
+      toast('Требуется авторизация');
+      throw new Error('No user found');
+    }
 
-  if (!response.ok) {
-    throw new Error('Failed to save draft');
+    const token = getToken();
+    if (!token) {
+      console.error('No token found in localStorage');
+      toast('Требуется авторизация');
+      throw new Error('No token found');
+    }
+    
+    console.log('Sending DELETE request to:', `${window.API_BASE_URL}/api/projects/${projectId}`);
+    console.log('Token preview:', token.substring(0, 30) + '...');
+    console.log('User ID:', user.id);
+    
+    const response = await fetch(`${window.API_BASE_URL}/api/projects/${projectId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    console.log('DELETE response status:', response.status);
+    console.log('DELETE response ok:', response.ok);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('DELETE error response:', errorText);
+      
+      if (response.status === 401) {
+        // Token expired - need to login again
+        logout();
+        toast('Сессия истекла. Войдите снова');
+        throw new Error('Token expired');
+      } else if (response.status === 403) {
+        // Forbidden - user doesn't own the project
+        console.error('403 Forbidden: User does not own this project');
+        toast('Ошибка доступа: у вас нет прав на удаление этого проекта');
+        throw new Error('Forbidden: User does not own this project');
+      } else if (response.status === 404) {
+        // Project not found
+        console.error('404 Not Found: Project does not exist');
+        toast('Проект не найден');
+        throw new Error('Project not found');
+      } else {
+        throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
+      }
+    }
+
+    // Удаляем из window.projectsData
+    const idx = window.projectsData ? window.projectsData.findIndex(p => p.id === projectId) : -1;
+    if (idx !== -1) {
+      window.projectsData.splice(idx, 1);
+      console.log('Removed from window.projectsData, remaining:', window.projectsData.length);
+    }
+
+    // Удаляем карточку из DOM
+    const cardElement = document.querySelector(`[data-project-id="${projectId}"]`);
+    if (cardElement) {
+      console.log('Found card element, removing from DOM');
+      cardElement.classList.add('deleting');
+      setTimeout(() => {
+        cardElement.remove();
+        console.log('Card removed from DOM');
+      }, 300);
+    } else {
+      console.warn('Card element not found for projectId:', projectId);
+    }
+    
+    // Обновляем счётчики
+    updateCounters();
+    
+    // Если это страница избранного - перерендерим сетку
+    if (window.currentView === 'favorites') {
+      const favorites = (window.projectsData || []).filter(p => p.fav || p.is_favorite);
+      renderProjectsGrid(favorites);
+    }
+    
+    console.log('Project deleted successfully');
+  } catch (error) {
+    console.error('Delete project error:', error);
+    throw error;
   }
-
-  const data = await response.json();
-  return data;
 }
 
 // ==================== INITIALIZATION ====================
@@ -1140,8 +1276,29 @@ function updateUserUI() {
   }
 }
 
-// Initialization is handled in index.html
-// to avoid duplicate initialization
+/**
+ * Initialize app
+ */
+async function initApp() {
+  // Apply saved theme
+  const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME) || 'light';
+  applyTheme(savedTheme);
+
+  // Check authentication
+  if (isAuthenticated()) {
+    try {
+      // Update user info
+      await getCurrentUser();
+      updateUserUI();
+    } catch (error) {
+      console.error('Init error:', error);
+      logout();
+    }
+  }
+}
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', initApp);
 
 // Export functions for global use
 window.api = {
@@ -1168,26 +1325,20 @@ window.api = {
   startLogoGeneration,
   selectLogo,
   loadDashboardProjects,
+  renderProjectsGrid,
+  handleFavorite,
+  openProject,
+  downloadProject,
+  showDeleteModal,
   updateCounters,
   updateSubscriptionUI,
   updateUserUI,
-  getLogo,
-  updateLogo,
-  saveLogoDraft,
-  openEditor,
 };
 
-// Export individual functions for direct use
+// Export functions for global use
 window.updateStatsUI = updateStatsUI;
 window.updateSubscriptionUI = updateSubscriptionUI;
 window.updateUserUI = updateUserUI;
 window.updateCounters = updateCounters;
-window.isAuthenticated = isAuthenticated;
-window.openEditor = openEditor;
-window.getToken = getToken;
-
-// Export API base URL
-window.API_BASE_URL = API_BASE_URL;
-
-// Also export api globally without window prefix for compatibility
-window.apiGlobal = window.api;
+window.showDeleteModal = showDeleteModal;
+window.downloadProject = downloadProject;
