@@ -2622,6 +2622,11 @@ async function handleLogin() {
   }
 
   try {
+    // Логи для диагностики
+    console.log('1. объект window.api:', window.api);
+    console.log('2. тип window.api:', typeof window.api);
+    console.log('3. window.api.login:', window.api?.login);
+    
     const data = await window.api.login(email, password);
     currentUser = data.user;
     toast('Добро пожаловать, ' + data.user.name + '!');

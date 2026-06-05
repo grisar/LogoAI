@@ -2,7 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-const PORT = 8080;
+const PORT = 9000;
 
 const mimeTypes = {
   '.html': 'text/html',
@@ -17,7 +17,9 @@ const mimeTypes = {
 };
 
 const server = http.createServer((req, res) => {
-  let filePath = '.' + req.url;
+  // Убираем query string из URL для определения типа файла
+  const urlParts = req.url.split('?');
+  let filePath = '.' + urlParts[0];
   if (filePath === './') filePath = './index.html';
   
   const extname = String(path.extname(filePath)).toLowerCase();
